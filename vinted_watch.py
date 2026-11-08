@@ -119,6 +119,8 @@ PACKAGING = [
 #  match:          minst ett av orden måste finnas i titel eller märke
 #  exclude:        extra ord som sorterar bort annonsen (titel eller märke)
 #  exclude_brands: annonsen sorteras bort om märket är något av dessa
+#  require:        minst ett av orden måste stå i titeln (t.ex. modellnamn)
+#  max_price:      eget maxpris för just den sökningen
 RICK = {
     "match": ["rick owens", "drkshdw", "drk shdw", "lilies"],
     "exclude_brands": ["avant garde", "japan style"],
@@ -126,6 +128,23 @@ RICK = {
 SAINT_LAURENT = {
     "match": ["saint laurent", "yves saint laurent", "ysl"],
     "exclude": COSMETICS,
+}
+
+# Balenciagas klassiska motorcycle bag (City, Part Time, Work, First, Velo, Town ...).
+# Märket måste vara Balenciaga och modellen måste stå i titeln.
+BALENCIAGA_MOTO = {
+    "match": ["balenciaga"],
+    "require": [
+        "city", "le city", "part time", "parttime", "motorcycle*", "motorbike*", "moto",
+        "giant*", "classic", "first", "velo", "town", "work", "twiggy", "weekender",
+        "arena", "lariat",
+    ],
+    "exclude": [
+        "nyckelring*", "keychain*", "key ring*", "keyring*", "nøglering*", "breloczek*",
+        "brelok*", "avaimenperä*", "bag charm*", "charm", "plånbok*", "wallet*",
+        "portfel*", "lompakko*", "pung", "card holder*", "korthållare*",
+    ],
+    "max_price": 2000,
 }
 
 SEARCHES = [
@@ -139,6 +158,10 @@ SEARCHES = [
     {"label": "YSL", "query": "YSL", **SAINT_LAURENT},
     {"label": "Ann Demeulemeester", "query": "Ann Demeulemeester",
      "match": ["ann demeulemeester", "demeulemeester"]},
+    {"label": "Balenciaga City", "query": "Balenciaga City", **BALENCIAGA_MOTO},
+    {"label": "Balenciaga Part Time", "query": "Balenciaga Part Time", **BALENCIAGA_MOTO},
+    {"label": "Balenciaga moto", "query": "Balenciaga motorcycle bag", **BALENCIAGA_MOTO},
+    {"label": "Balenciaga Giant", "query": "Balenciaga giant", **BALENCIAGA_MOTO},
     {"label": "Dior", "query": "Dior", "match": ["dior"],
      "exclude": COSMETICS + SNEAKERS},
 ]
@@ -176,6 +199,7 @@ EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING)
 for cfg in SEARCHES:
     cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
     cfg["_exclude"] = word_pattern(cfg.get("exclude"))
+    cfg["_require"] = word_pattern(cfg.get("require"))
     cfg["_bad_brands"] = [b.lower() for b in cfg.get("exclude_brands", [])]
 
 
@@ -242,6 +266,8 @@ def keep(it, cfg, max_price):
     if cfg["_exclude"] and cfg["_exclude"].search(text):
         return False
     if any(b in brand.lower() for b in cfg["_bad_brands"]):
+        return False
+    if cfg["_require"] and not cfg["_require"].search(title):
         return False
     if KIDS_SIZE_RE.search(it["_size"]):
         return False
