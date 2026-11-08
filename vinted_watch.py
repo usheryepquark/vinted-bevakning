@@ -107,6 +107,32 @@ TIES = [
     "solmio*", "rusetti*",                                                         # fi
 ]
 
+# Kepsar (gäller alla sökningar). Ordet "cap" ensamt hanteras i CAP_RE längre ner
+# (så att "cap sleeve" och "cap toe" får vara kvar).
+CAPS = [
+    "keps", "kepsar", "kepsen", "basebollkeps*", "snapback*", "trucker cap*",
+    "trucker hat*", "baseball cap*", "baseballcap*", "dad hat*", "dad cap*",          # sv/en
+    "kasket*", "baseballkasket*",                                                      # da
+    "czapka z daszkiem", "czapki z daszkiem", "czapeczka z daszkiem", "bejsbolówk*",  # pl
+    "lippis*", "lippalakki*",                                                          # fi
+]
+
+# Fler skönhetsord och skönhetsmärken (läggs till kosmetikfiltret).
+BEAUTY_EXTRA = [
+    "sephora*", "douglas", "lyko", "kicks beauty", "fenty beauty", "charlotte tilbury",
+    "mac cosmetics", "nyx", "maybelline", "l'oréal", "l'oreal", "loreal", "clinique",
+    "estée lauder", "estee lauder", "lancôme", "lancome", "benefit cosmetics",
+    "rare beauty", "huda beauty", "too faced", "urban decay", "nars", "kiko",
+    "rimmel", "the ordinary", "la roche-posay", "glossier", "rituals",
+    "kylie cosmetics", "anastasia beverly hills", "bobbi brown", "armani beauty",
+    "eyebrow*", "brow gel*", "brow pencil*", "ögonbryn*", "lashes", "lösfrans*",
+    "ögonfrans*", "fransar", "lash serum*", "kohl", "contour*", "setting spray*",
+    "bb cream*", "cc cream*", "lip liner*", "lipliner*", "lip pencil*", "läppenn*",
+    "läppbalsam*", "korektor*", "baza pod makijaż", "kredka do oczu", "kredka do brwi",
+    "kulmakynä*", "huulikiilto*", "huulirasva*", "øjenbryn*", "vipper", "mascara",
+    "foundation", "läppstift",
+]
+
 # Hårvård och övrig skönhet (läggs till kosmetiklistan, som nu gäller alla sökningar).
 HAIRCARE = [
     "schampo*", "shampoo*", "schampoo*", "balsam", "conditioner*", "hårvård*",
@@ -270,7 +296,9 @@ def word_pattern(words):
 
 
 EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS + HAIR + TIES
-                          + COSMETICS + HAIRCARE)
+                          + COSMETICS + HAIRCARE + CAPS + BEAUTY_EXTRA)
+# "Gucci cap", "caps" osv, men inte "cap sleeve" eller "cap toe".
+CAP_RE = re.compile(r"(?<!\w)caps?(?![\w-])(?!\s+(sleeve|toe|d'))", re.IGNORECASE)
 # "Gucci tie", "Dior silk tie" osv, men inte "tie-dye" eller "tie front".
 TIE_RE = re.compile(
     r"(?<!\w)(gucci|dior|prada|ysl|saint laurent|givenchy|balmain|balenciaga|"
@@ -344,7 +372,8 @@ def keep(it, cfg, max_price):
     title = it.get("title") or ""
     brand = it["_brand"]
     text = f"{title} {brand}"
-    if EXCLUDE_RE.search(text) or VOLUME_RE.search(title) or TIE_RE.search(title):
+    if EXCLUDE_RE.search(text) or VOLUME_RE.search(title) or TIE_RE.search(title) \
+            or CAP_RE.search(title):
         return False
     if cfg["_exclude"] and cfg["_exclude"].search(text):
         return False
