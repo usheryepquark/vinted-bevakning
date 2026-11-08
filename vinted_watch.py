@@ -251,8 +251,10 @@ def brand_and_size(it):
     return (b.group(1).strip() if b else ""), (sz.group(1).strip() if sz else "")
 
 
-def fetch(s, query, max_price):
+def fetch(s, query, max_price, page=1):
     params = {"search_text": query, "price_to": max_price, "order": "newest_first"}
+    if page > 1:
+        params["page"] = page
     r = s.get(f"{BASE}/catalog", params=params, timeout=30)
     r.raise_for_status()
     data = _flight(r.text)
@@ -345,17 +347,22 @@ def send_recent(minutes):
     Rör inte listan över sedda annonser."""
     s = get_session()
     start_id, start_t = newest_id(s), time.time()
+    rough_cutoff = start_id - minutes * 15000  # generös gräns för hur långt bak vi bläddrar
     found = {}
     for cfg in SEARCHES:
         max_price = cfg.get("max_price", MAX_PRICE)
-        try:
-            items = [it for it in fetch(s, cfg["query"], max_price) if keep(it, cfg, max_price)]
-        except Exception as e:
-            print(f"Fel vid sökning på {cfg['label']}: {e}")
-            continue
-        for it in items:
-            found.setdefault(it["id"], (it, cfg["label"]))
-        time.sleep(2)
+        for page in range(1, 6):  # upp till 5 sidor bakåt
+            try:
+                raw = fetch(s, cfg["query"], max_price, page)
+            except Exception as e:
+                print(f"Fel vid sökning på {cfg['label']} sida {page}: {e}")
+                break
+            for it in raw:
+                if keep(it, cfg, max_price):
+                    found.setdefault(it["id"], (it, cfg["label"]))
+            time.sleep(2)
+            if not raw or min(it["id"] for it in raw) < rough_cutoff:
+                break
     end_id, end_t = newest_id(s), time.time()
     per_min = max((end_id - start_id) / max(end_t - start_t, 1) * 60, 3000)
     cutoff = start_id - minutes * per_min
