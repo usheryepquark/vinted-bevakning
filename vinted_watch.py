@@ -43,6 +43,10 @@ EXCLUDE = [
 
     # Märken
     "h&m", "h & m", "hennes & mauritz", "primark*", "shein*",
+
+    # Kopior och "inspirerat av"
+    "inspired*", "inspirerad*", "inspireret*", "inspiracj*", "inspiroitu*",
+    "a'la", "a’la", "à la", "dupe*", "replica*", "replika*", "fake",
 ]
 
 # --- Används av vissa sökningar ------------------------------------------
@@ -60,7 +64,8 @@ COSMETICS = [
     "lip maximizer*", "balm", "eyeshadow*", "eye shadow*", "palette*", "powder",
     "cushion*", "skincare*", "skin care", "moisturi*", "cleanser*", "shower gel*",
     "body lotion*", "nail polish*", "nail", "beauty*", "sample*", "tester*",
-    "travel size", "miniature*",
+    "travel size", "miniature*", "gift set*", "presentset*", "gaveæske*",
+    "zestaw prezentowy", "lahjapakkaus*",
     # pl
     "kosmetyk*", "makijaż*", "pomadk*", "szmink*", "błyszczyk*", "tusz do rzęs",
     "podkład*", "róż do policzków", "cienie do powiek", "rozświetlacz*", "krem",
@@ -223,7 +228,11 @@ def keep(it, cfg, max_price):
         return False
     if cfg.get("kids_sizes") is False and KIDS_SIZE_RE.search(it["_size"]):
         return False
-    if not cfg["_match"].search(text):
+    if brand:
+        # har annonsen ett märke måste det vara rätt märke ("Gucci-stil" från Zara åker bort)
+        if not cfg["_match"].search(brand):
+            return False
+    elif not cfg["_match"].search(title):
         return False
     try:
         if float((it.get("price") or {}).get("amount", 0)) > max_price:
