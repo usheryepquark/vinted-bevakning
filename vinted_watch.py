@@ -274,7 +274,8 @@ EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS + HAIR + TIES
 # "Gucci tie", "Dior silk tie" osv, men inte "tie-dye" eller "tie front".
 TIE_RE = re.compile(
     r"(?<!\w)(gucci|dior|prada|ysl|saint laurent|givenchy|balmain|balenciaga|"
-    r"rick owens|ann demeulemeester|silk|siden|jedwabny)\s+ties?(?![\w-])|^\s*ties?\s",
+    r"rick owens|ann demeulemeester|silk|siden|jedwabny)\s+ties?(?![\w-])"
+    r"(?!\s+(front|waist|up|back|side|detail|belt|knot|neck|blouse|top|dress))",
     re.IGNORECASE)
 for cfg in SEARCHES:
     cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
