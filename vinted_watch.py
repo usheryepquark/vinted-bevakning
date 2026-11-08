@@ -83,6 +83,40 @@ COSMETICS = [
     "touche eclat", "all hours",
 ]
 
+# Håraccessoarer (gäller alla sökningar).
+HAIR = [
+    "hårspänn*", "hårklämm*", "hårklips*", "hårsnodd*", "hårband*", "hårnål*",
+    "hårsmycke*", "håraccessoar*", "diadem*", "tiara*", "scrunchie*", "pannband*",  # sv
+    "hårspænde*", "hårklemme*", "hårbånd*", "hårelastik*", "hårpynt*",             # da
+    "hair clip*", "hairclip*", "hair claw*", "claw clip*", "hair pin*", "hairpin*",
+    "bobby pin*", "hair tie*", "hair band*", "hairband*", "headband*", "head band*",
+    "barrette*", "hair accessor*", "hair slide*", "hair bow*", "snap clip*",       # en
+    "spinka*", "spinki", "klamra do włosów", "klamerka do włosów", "gumka do włosów",
+    "gumki do włosów", "opaska", "opaska do włosów", "wsuwk*", "frotk*",
+    "akcesoria do włosów", "ozdoba do włosów",                                     # pl
+    "hiuspinni*", "hiussolki*", "hiuspanta*", "hiusklipsi*", "hiuslenkki*",
+    "hiuskoru*", "hiusasuste*", "panta",                                           # fi
+]
+
+# Slipsar och flugor (gäller alla sökningar). Ordet "tie" ensamt är medvetet
+# utelämnat (tie-dye, tie front), se TIE_RE längre ner.
+TIES = [
+    "slips*", "fluga", "flugor", "flugan",                                         # sv/da
+    "necktie*", "neck tie*", "bow tie*", "bowtie*", "silk tie*", "ties",           # en
+    "krawat*", "muszka",                                                           # pl
+    "solmio*", "rusetti*",                                                         # fi
+]
+
+# Hårvård och övrig skönhet (läggs till kosmetiklistan, som nu gäller alla sökningar).
+HAIRCARE = [
+    "schampo*", "shampoo*", "schampoo*", "balsam", "conditioner*", "hårvård*",
+    "hårolja*", "hair oil*", "hair mask*", "hårinpackning*", "hair serum*",
+    "plattång*", "locktång*", "hårfön*", "hair dryer*", "straightener*",
+    "curling iron*", "szampon*", "odżywka do włosów", "hoitoaine*", "sampoo*",
+    "hiusöljy*", "skönhet*", "skönhetsprodukt*", "hudkräm*", "ansiktsmask*",
+    "face mask*", "sheet mask*", "deodorant*", "deo",
+]
+
 # Sneakers (gäller alla sökningar).
 SNEAKERS = [
     "sneaker*", "trainer", "trainers", "gympaskor*", "sportskor*", "löparskor*",
@@ -235,7 +269,13 @@ def word_pattern(words):
     return re.compile("|".join(parts), re.IGNORECASE)
 
 
-EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS)
+EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS + HAIR + TIES
+                          + COSMETICS + HAIRCARE)
+# "Gucci tie", "Dior silk tie" osv, men inte "tie-dye" eller "tie front".
+TIE_RE = re.compile(
+    r"(?<!\w)(gucci|dior|prada|ysl|saint laurent|givenchy|balmain|balenciaga|"
+    r"rick owens|ann demeulemeester|silk|siden|jedwabny)\s+ties?(?![\w-])|^\s*ties?\s",
+    re.IGNORECASE)
 for cfg in SEARCHES:
     cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
     cfg["_exclude"] = word_pattern(cfg.get("exclude"))
@@ -303,7 +343,7 @@ def keep(it, cfg, max_price):
     title = it.get("title") or ""
     brand = it["_brand"]
     text = f"{title} {brand}"
-    if EXCLUDE_RE.search(text) or VOLUME_RE.search(title):
+    if EXCLUDE_RE.search(text) or VOLUME_RE.search(title) or TIE_RE.search(title):
         return False
     if cfg["_exclude"] and cfg["_exclude"].search(text):
         return False
