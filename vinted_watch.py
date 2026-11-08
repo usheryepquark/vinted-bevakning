@@ -74,7 +74,7 @@ def search(s, keyword, max_price):
     kw = keyword.lower()
     out = []
     for it in items:
-        brand = str(it.get("brandTitle") or it.get("brand_title") or "")
+        brand = json.dumps(it.get("itemBox") or {}, ensure_ascii=False)
         if kw not in brand.lower() and kw not in (it.get("title") or "").lower():
             continue
         try:
