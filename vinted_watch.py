@@ -291,35 +291,22 @@ def notify(it, label):
     requests.post("https://ntfy.sh", json=payload, timeout=15)
 
 
-def _find_ts(obj, depth=0):
-    if depth > 4:
-        return None
-    if isinstance(obj, dict):
-        for k, val in obj.items():
-            if k in ("timestamp", "createdAt", "created_at_ts") and isinstance(val, (int, float)):
-                return val / 1000 if val > 1e12 else val
-            r = _find_ts(val, depth + 1)
-            if r:
-                return r
-    elif isinstance(obj, list):
-        for val in obj[:2]:
-            r = _find_ts(val, depth + 1)
-            if r:
-                return r
-    return None
-
-
-def item_time(it):
-    """Uppladdningstid (unix-sekunder) om Vinted skickar med den, annars None."""
-    return _find_ts(it.get("photos")) or _find_ts({k: it.get(k) for k in ("createdAt", "created_at_ts")})
+def newest_id(s):
+    """Högsta annons-id just nu på hela vinted.se (id:n delas ut i ordning)."""
+    r = s.get(f"{BASE}/catalog", params={"order": "newest_first"}, timeout=30)
+    d = _flight(r.text)
+    marker = '"items":{"items":'
+    raw, _ = json.JSONDecoder().raw_decode(d, d.find(marker) + len(marker))
+    return max(row["productItem"]["id"] for row in raw if isinstance(row, dict) and row.get("productItem"))
 
 
 def send_recent(minutes):
-    """Skickar notiser för annonser som klarar filtren och laddats upp senaste X minuterna.
+    """Skickar notiser för annonser som klarar filtren och är från ungefär de senaste
+    X minuterna. Vinted visar ingen uppladdningstid, så åldern räknas ut från id:t.
     Rör inte listan över sedda annonser."""
-    cutoff = time.time() - minutes * 60
     s = get_session()
-    sent, sent_ids, unknown = 0, set(), 0
+    start_id, start_t = newest_id(s), time.time()
+    found = {}
     for cfg in SEARCHES:
         max_price = cfg.get("max_price", MAX_PRICE)
         try:
@@ -327,23 +314,19 @@ def send_recent(minutes):
         except Exception as e:
             print(f"Fel vid sökning på {cfg['label']}: {e}")
             continue
-        if items and sent == 0 and unknown == 0:
-            print("fotofält:", sorted((items[0].get("photos") or [{}])[0].keys()))
-        hits = 0
         for it in items:
-            ts = item_time(it)
-            if ts is None:
-                unknown += 1
-                continue
-            if ts >= cutoff and it["id"] not in sent_ids:
-                sent_ids.add(it["id"])
-                notify(it, cfg["label"])
-                sent += 1
-                hits += 1
-                time.sleep(1)
-        print(f"{cfg['label']}: {hits} senaste {minutes} min")
+            found.setdefault(it["id"], (it, cfg["label"]))
         time.sleep(2)
-    print(f"Skickade {sent} notiser. Annonser utan tidsstämpel: {unknown}")
+    end_id, end_t = newest_id(s), time.time()
+    per_min = max((end_id - start_id) / max(end_t - start_t, 1) * 60, 3000)
+    cutoff = start_id - minutes * per_min
+    print(f"~{per_min:.0f} nya annonser/min på Vinted, gräns id {cutoff:.0f}")
+    recent = sorted((v for k, v in found.items() if k >= cutoff), key=lambda x: x[0]["id"])
+    for it, label in recent:
+        notify(it, label)
+        print(f"  skickad: {label} | {it['title'][:60]}")
+        time.sleep(1)
+    print(f"Skickade {len(recent)} notiser.")
 
 
 def main():
