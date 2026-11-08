@@ -141,6 +141,23 @@ SAINT_LAURENT = {
 
 # Balenciagas klassiska motorcycle bag (City, Part Time, Work, First, Velo, Town ...).
 # Märket måste vara Balenciaga och modellen måste stå i titeln.
+# Alla sorters skor (används för Balenciaga). Medvetet utan "arena" och "hourglass",
+# som också är Balenciaga-väskor.
+SHOES = [
+    "sko", "skor", "skorna", "stövl*", "boots", "kängor*", "känga", "sandal*",
+    "loafer*", "pumps", "klackskor*", "högklack*", "slides", "slide", "tofflor*",
+    "mules", "espadrill*", "ballerinaskor*", "träskor*",                         # sv
+    "støvle*", "hæle*", "sandaler", "klipklapper*",                               # da
+    "shoes", "shoe", "heels", "heel", "flats", "sandals", "footwear", "slingback*",
+    "slip-on*", "slip on*", "flip flop*", "clogs", "crocs",                       # en
+    "buty", "but", "botki", "kozaki", "sandały*", "szpilki", "klapki", "mokasyny",
+    "trzewiki", "czółenka", "obuwie", "glany", "kalosze",                         # pl
+    "kengät*", "kenkä*", "saappaat*", "nilkkurit*", "sandaalit*", "korkokengät*",
+    "tossut*",                                                                    # fi
+    "arenas", "knife", "tyrex", "bulldozer", "rhino", "cargo sneaker*",
+    "pool slide*", "stretch boot*", "army boot*",                                 # modeller
+]
+
 BALENCIAGA_MOTO = {
     "match": ["balenciaga"],
     "require": [
@@ -152,13 +169,13 @@ BALENCIAGA_MOTO = {
         "nyckelring*", "keychain*", "key ring*", "keyring*", "nøglering*", "breloczek*",
         "brelok*", "avaimenperä*", "bag charm*", "charm", "plånbok*", "wallet*",
         "portfel*", "lompakko*", "pung", "card holder*", "korthållare*",
-    ],
+    ] + SHOES,
     "max_price": 2000,
 }
 
 SEARCHES = [
-    {"label": "Gucci", "query": "Gucci", "match": ["gucci"]},
-    {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"]},
+    {"label": "Gucci", "query": "Gucci", "match": ["gucci"], "exclude": ["ace"]},
+    {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"], "exclude": SHOES},
     {"label": "Prada", "query": "Prada", "match": ["prada"]},
     {"label": "Rick Owens", "query": "Rick Owens", **RICK},
     {"label": "DRKSHDW", "query": "DRKSHDW", **RICK},
