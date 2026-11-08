@@ -7,17 +7,19 @@ import time
 
 import requests
 
-# ---- Inställningar -------------------------------------------------------
-SEARCHES = [
-    {"keyword": "Gucci", "max_price": 800},
-    {"keyword": "Balenciaga", "max_price": 800},
-    {"keyword": "Prada", "max_price": 800},
-]
-# Annonser där titeln eller märket innehåller något av dessa ord hoppas över.
-# Ett ord utan * måste stå som eget ord ("bok" fångar "bok" men inte "bokmärke").
-# Ett ord med * räcker som början ("kosmetyczk*" fångar kosmetyczka, kosmetyczki).
+# =========================================================================
+#  INSTÄLLNINGAR
+#
+#  Ord i listorna nedan:
+#    - utan *  måste stå som eget ord ("bok" fångar "bok" men inte "bokmärke")
+#    - med *   räcker som början på ett ord ("kosmetyczk*" fångar kosmetyczka)
+# =========================================================================
+
+MAX_PRICE = 800  # kr, gäller alla sökningar om inget annat anges
+
+# --- Gäller ALLA sökningar: titel eller märke ----------------------------
 EXCLUDE = [
-    # --- Sminkväskor och necessärer ---
+    # Sminkväskor och necessärer
     "sminkväsk*", "necessär*", "toalettväsk*", "kosmetikväsk*", "sminkpåse*",    # sv
     "makeuptask*", "make-up task*", "toilettask*", "kosmetiktask*", "necessær*",  # da
     "makeup bag*", "make-up bag*", "make up bag*", "cosmetic bag*", "cosmetics bag*",
@@ -25,27 +27,106 @@ EXCLUDE = [
     "kosmetyczk*",                                                                # pl
     "meikkipussi*", "meikkilaukku*", "kosmetiikkalaukku*", "toilettilaukku*",     # fi
 
-    # --- Parfym ---
+    # Parfym
     "parfym*", "parfum*", "doft",                                                 # sv
     "parfume*", "duft",                                                           # da
     "perfum*", "fragrance*", "eau de", "cologne", "edt", "edp",                   # en + pl
+    "zapach*", "woda toaletowa", "woda perfumowana",                              # pl
     "hajuvesi*", "hajuvede*", "tuoksu",                                           # fi
 
-    # --- Böcker ---
+    # Böcker
     "bok", "boken", "böcker*",                                                    # sv
     "bog", "bogen", "bøger*",                                                     # da
     "book", "books", "coffee table",                                              # en
     "książk*", "ksiazk*",                                                         # pl
     "kirja", "kirjat", "kirjan",                                                  # fi
 
-    # --- Märken ---
-    "h&m", "h & m", "h&amp;m", "hennes & mauritz", "primark*", "shein*",
+    # Märken
+    "h&m", "h & m", "hennes & mauritz", "primark*", "shein*",
 ]
+
+# --- Används av vissa sökningar ------------------------------------------
+COSMETICS = [
+    # sv
+    "kosmetik*", "smink*", "läppstift*", "läppglans*", "mascara*", "foundation*",
+    "puder*", "concealer*", "ögonskugg*", "eyeliner*", "nagellack*", "highlighter*",
+    "primer*", "hudvård*", "ansiktskräm*", "kräm", "serum*", "duschgel*", "duschkräm*",
+    "bodylotion*", "rouge dior", "rouge pur",
+    # da
+    "makeup*", "make-up*", "make up", "læbestift*", "neglelak*", "pudder*",
+    "hudpleje*", "bronzer*", "blush*",
+    # en
+    "cosmetic*", "lipstick*", "lip gloss*", "lip glow*", "lip oil*", "lip balm*",
+    "lip maximizer*", "balm", "eyeshadow*", "eye shadow*", "palette*", "powder",
+    "cushion*", "skincare*", "skin care", "moisturi*", "cleanser*", "shower gel*",
+    "body lotion*", "nail polish*", "nail", "beauty*", "sample*", "tester*",
+    "travel size", "miniature*",
+    # pl
+    "kosmetyk*", "makijaż*", "pomadk*", "szmink*", "błyszczyk*", "tusz do rzęs",
+    "podkład*", "róż do policzków", "cienie do powiek", "rozświetlacz*", "krem",
+    "kremy", "żel pod prysznic", "balsam*", "lakier do paznokci", "próbk*",
+    "miniatur*",
+    # fi
+    "kosmetiikka*", "meikki*", "huulipuna*", "ripsiväri*", "meikkivoide*",
+    "puuteri*", "poskipuna*", "luomiväri*", "kynsilakka*", "voide*",
+    "ihonhoito*", "suihkugeeli*",
+    # produktnamn
+    "diorshow*", "backstage", "addict", "capture totale", "forever skin",
+    "dior prestige", "sauvage", "j'adore", "jadore", "miss dior",
+    "hypnotic poison", "libre", "black opium", "mon paris", "touche éclat",
+    "touche eclat", "all hours",
+]
+
+SNEAKERS = [
+    "sneaker*", "trainer", "trainers", "gympaskor*", "sportskor*", "löparskor*",
+    "sneakersy", "trampki*", "buty sportowe", "adidasy", "tennarit", "lenkkarit",
+    "b22", "b23", "b27", "b30", "b33", "b57", "walk'n'dior", "walk n dior",
+]
+
+KIDS = [
+    "barn*", "baby*", "bebis*", "kids", "kid", "child*", "junior*", "toddler*",
+    "flicka", "flickor", "pojke", "pojkar",                                       # sv/en
+    "børn*", "børne*", "pige", "piger", "dreng*",                                 # da
+    "dziecięc*", "dziecko", "dzieci", "dziewczyn*", "dziewczęc*", "chłop*",
+    "niemowl*",                                                                   # pl
+    "lasten", "vauva*", "tyttö*", "poika*",                                       # fi
+]
+
+# --- Sökningarna ---------------------------------------------------------
+#  query:          vad som skrivs i Vinteds sökruta
+#  match:          minst ett av orden måste finnas i titel eller märke
+#  exclude:        extra ord som sorterar bort annonsen (titel eller märke)
+#  exclude_brands: annonsen sorteras bort om märket är något av dessa
+#  kids_sizes:     False = sortera bort barnstorlekar (t.ex. "3 år", "12 mån")
+RICK = {
+    "match": ["rick owens", "drkshdw", "drk shdw", "lilies"],
+    "exclude_brands": ["avant garde", "japan style"],
+}
+SAINT_LAURENT = {
+    "match": ["saint laurent", "yves saint laurent", "ysl"],
+    "exclude": COSMETICS,
+}
+
+SEARCHES = [
+    {"label": "Gucci", "query": "Gucci", "match": ["gucci"]},
+    {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"]},
+    {"label": "Prada", "query": "Prada", "match": ["prada"]},
+    {"label": "Rick Owens", "query": "Rick Owens", **RICK},
+    {"label": "DRKSHDW", "query": "DRKSHDW", **RICK},
+    {"label": "Rick Owens Lilies", "query": "Rick Owens Lilies", **RICK},
+    {"label": "Saint Laurent", "query": "Saint Laurent", **SAINT_LAURENT},
+    {"label": "YSL", "query": "YSL", **SAINT_LAURENT},
+    {"label": "Ann Demeulemeester", "query": "Ann Demeulemeester",
+     "match": ["ann demeulemeester", "demeulemeester"]},
+    {"label": "Dior", "query": "Dior", "match": ["dior"],
+     "exclude": COSMETICS + SNEAKERS + KIDS, "kids_sizes": False},
+]
+
 BASE = "https://www.vinted.se"
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 SEEN_FILE = "seen.json"
-MAX_SEEN = 3000
-# -------------------------------------------------------------------------
+MAX_SEEN = 6000
+# =========================================================================
 
 HEADERS = {
     "User-Agent": (
@@ -55,8 +136,12 @@ HEADERS = {
     "Accept-Language": "sv-SE,sv;q=0.9,en;q=0.8",
 }
 
+KIDS_SIZE_RE = re.compile(r"(?<!\w)(år|mån|months?|years?)(?!\w)", re.IGNORECASE)
 
-def _exclude_pattern(words):
+
+def word_pattern(words):
+    if not words:
+        return None
     parts = []
     for w in words:
         prefix = w.endswith("*")
@@ -65,20 +150,27 @@ def _exclude_pattern(words):
     return re.compile("|".join(parts), re.IGNORECASE)
 
 
-EXCLUDE_RE = _exclude_pattern(EXCLUDE)
+EXCLUDE_RE = word_pattern(EXCLUDE)
+for cfg in SEARCHES:
+    cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
+    cfg["_exclude"] = word_pattern(cfg.get("exclude"))
+    cfg["_bad_brands"] = [b.lower() for b in cfg.get("exclude_brands", [])]
 
 
-def load_seen():
+def load_state():
     try:
         with open(SEEN_FILE) as f:
-            return json.load(f)
+            data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        return []
+        return [], []
+    if isinstance(data, list):  # gammalt format: bara id:n för de tre första märkena
+        return data, (["Gucci", "Balenciaga", "Prada"] if data else [])
+    return data.get("ids", []), data.get("seeded", [])
 
 
-def save_seen(ids):
+def save_state(ids, seeded):
     with open(SEEN_FILE, "w") as f:
-        json.dump(ids[-MAX_SEEN:], f)
+        json.dump({"seeded": sorted(seeded), "ids": ids[-MAX_SEEN:]}, f)
 
 
 def get_session():
@@ -93,8 +185,15 @@ def _flight(html):
     return "".join(json.loads('"' + c + '"') for c in chunks)
 
 
-def search(s, keyword, max_price):
-    params = {"search_text": keyword, "price_to": max_price, "order": "newest_first"}
+def brand_and_size(it):
+    label = ((it.get("itemBox") or {}).get("accessibilityLabel")) or ""
+    b = re.search(r"Varumärke: (.*?)(?:, Skick:|, Storlek:|$)", label)
+    sz = re.search(r"Storlek: (.*?), \d", label)
+    return (b.group(1).strip() if b else ""), (sz.group(1).strip() if sz else "")
+
+
+def fetch(s, query, max_price):
+    params = {"search_text": query, "price_to": max_price, "order": "newest_first"}
     r = s.get(f"{BASE}/catalog", params=params, timeout=30)
     r.raise_for_status()
     data = _flight(r.text)
@@ -107,26 +206,31 @@ def search(s, keyword, max_price):
     for row in raw:
         it = row.get("productItem") if isinstance(row, dict) else None
         if isinstance(it, dict) and "id" in it:
+            it["_brand"], it["_size"] = brand_and_size(it)
             items.append(it)
-    if items and os.environ.get("DEBUG_KEYS"):
-        print("fält:", sorted(items[0].keys()))
+    return items
 
-    kw = keyword.lower()
-    out = []
-    for it in items:
-        text = (it.get("title") or "") + " " + json.dumps(it.get("itemBox") or {}, ensure_ascii=False)
-        if EXCLUDE_RE.search(text):
-            continue
-        brand = json.dumps(it.get("itemBox") or {}, ensure_ascii=False)
-        if kw not in brand.lower() and kw not in (it.get("title") or "").lower():
-            continue
-        try:
-            if float((it.get("price") or {}).get("amount", 0)) > max_price:
-                continue
-        except (TypeError, ValueError):
-            pass
-        out.append(it)
-    return out
+
+def keep(it, cfg, max_price):
+    title = it.get("title") or ""
+    brand = it["_brand"]
+    text = f"{title} {brand}"
+    if EXCLUDE_RE.search(text):
+        return False
+    if cfg["_exclude"] and cfg["_exclude"].search(text):
+        return False
+    if any(b in brand.lower() for b in cfg["_bad_brands"]):
+        return False
+    if cfg.get("kids_sizes") is False and KIDS_SIZE_RE.search(it["_size"]):
+        return False
+    if not cfg["_match"].search(text):
+        return False
+    try:
+        if float((it.get("price") or {}).get("amount", 0)) > max_price:
+            return False
+    except (TypeError, ValueError):
+        pass
+    return True
 
 
 def price_text(it):
@@ -136,7 +240,7 @@ def price_text(it):
         return "pris okänt"
 
 
-def notify(it, keyword):
+def notify(it, label):
     if not NTFY_TOPIC:
         print("NTFY_TOPIC saknas, hoppar över notis")
         return
@@ -145,14 +249,14 @@ def notify(it, keyword):
     url = it.get("url") or f"/items/{it['id']}"
     if url.startswith("/"):
         url = BASE + url
-    size = it.get("sizeTitle") or it.get("size_title")
-    message = it.get("title", "")
-    if size:
-        message += f"\nStorlek: {size}"
+    lines = [it.get("title", "")]
+    details = " · ".join(x for x in (it["_brand"], it["_size"]) if x)
+    if details:
+        lines.append(details)
     payload = {
         "topic": NTFY_TOPIC,
-        "title": f"{keyword}: {price_text(it)}",
-        "message": message,
+        "title": f"{label}: {price_text(it)}",
+        "message": "\n".join(lines),
         "click": url,
         "tags": ["shopping"],
     }
@@ -163,40 +267,40 @@ def notify(it, keyword):
 
 def main():
     test_mode = "--test" in sys.argv
-    seen = load_seen()
-    first_run = not seen
-    seen_set = set(seen)
+    seen, seeded = load_state()
+    seen_set, seeded = set(seen), set(seeded)
 
     s = get_session()
     new_count = 0
     ok = 0
     for cfg in SEARCHES:
+        max_price = cfg.get("max_price", MAX_PRICE)
         try:
-            items = search(s, cfg["keyword"], cfg["max_price"])
+            items = [it for it in fetch(s, cfg["query"], max_price) if keep(it, cfg, max_price)]
         except Exception as e:
-            print(f"Fel vid sökning på {cfg['keyword']}: {e}")
+            print(f"Fel vid sökning på {cfg['label']}: {e}")
             continue
         ok += 1
-        print(f"{cfg['keyword']}: {len(items)} träffar")
+        first_time = cfg["query"] not in seeded  # ny sökning: spara utan notiser
+        print(f"{cfg['label']}: {len(items)} träffar" + (" (första gången, inga notiser)" if first_time else ""))
         for it in reversed(items):  # äldst först, så notiserna kommer i ordning
-            iid = it["id"]
-            if iid in seen_set:
+            if it["id"] in seen_set:
                 continue
-            seen.append(iid)
-            seen_set.add(iid)
-            if not first_run:
-                notify(it, cfg["keyword"])
+            seen.append(it["id"])
+            seen_set.add(it["id"])
+            if not first_time:
+                notify(it, cfg["label"])
                 new_count += 1
                 time.sleep(1)
+        seeded.add(cfg["query"])
         if test_mode and items:
-            notify(items[0], cfg["keyword"] + " (test)")
+            notify(items[0], cfg["label"] + " (test)")
         time.sleep(2)
 
     if ok == 0:
         sys.exit("Alla sökningar misslyckades")
-    save_seen(seen)
-    print("Första körningen: sparade befintliga annonser utan notiser."
-          if first_run else f"Skickade {new_count} notiser.")
+    save_state(seen, seeded)
+    print(f"Skickade {new_count} notiser.")
 
 
 if __name__ == "__main__":
