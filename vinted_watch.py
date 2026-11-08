@@ -1,6 +1,7 @@
 """Vinted-bevakning: kollar vinted.se efter nya annonser och skickar push via ntfy."""
 import json
 import os
+import re
 import sys
 import time
 
@@ -23,7 +24,6 @@ HEADERS = {
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/130.0 Safari/537.36"
     ),
-    "Accept": "application/json, text/plain, */*",
     "Accept-Language": "sv-SE,sv;q=0.9,en;q=0.8",
 }
 
@@ -32,8 +32,8 @@ def load_seen():
     try:
         with open(SEEN_FILE) as f:
             return json.load(f)
-    except FileNotFoundError:
-        return None
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
 
 
 def save_seen(ids):
@@ -44,48 +44,72 @@ def save_seen(ids):
 def get_session():
     s = requests.Session()
     s.headers.update(HEADERS)
-    s.get(BASE, timeout=20)  # hämtar sessionscookie
+    s.get(BASE, timeout=20)  # hämtar sessionscookies
     return s
 
 
+def _flight(html):
+    chunks = re.findall(r'self\.__next_f\.push\(\[1,"(.*?)"\]\)</script>', html, re.S)
+    return "".join(json.loads('"' + c + '"') for c in chunks)
+
+
 def search(s, keyword, max_price):
-    params = {
-        "search_text": keyword,
-        "price_to": max_price,
-        "currency": "SEK",
-        "order": "newest_first",
-        "per_page": 30,
-        "page": 1,
-    }
-    r = s.get(f"{BASE}/api/v2/catalog/items", params=params, timeout=20)
+    params = {"search_text": keyword, "price_to": max_price, "order": "newest_first"}
+    r = s.get(f"{BASE}/catalog", params=params, timeout=30)
     r.raise_for_status()
-    items = r.json().get("items", [])
+    data = _flight(r.text)
+    marker = '"items":{"items":'
+    pos = data.find(marker)
+    if pos < 0:
+        raise RuntimeError("hittade inga annonser i sidan (formatet kan ha ändrats)")
+    raw, _ = json.JSONDecoder().raw_decode(data, pos + len(marker))
+    items = []
+    for row in raw:
+        it = row.get("productItem") if isinstance(row, dict) else None
+        if isinstance(it, dict) and "id" in it:
+            items.append(it)
+    if items and os.environ.get("DEBUG_KEYS"):
+        print("fält:", sorted(items[0].keys()))
+
     kw = keyword.lower()
-    # behåll bara annonser där märket eller titeln faktiskt matchar
-    return [
-        it for it in items
-        if kw in (it.get("brand_title") or "").lower()
-        or kw in (it.get("title") or "").lower()
-    ]
+    out = []
+    for it in items:
+        brand = str(it.get("brandTitle") or it.get("brand_title") or "")
+        if kw not in brand.lower() and kw not in (it.get("title") or "").lower():
+            continue
+        try:
+            if float((it.get("price") or {}).get("amount", 0)) > max_price:
+                continue
+        except (TypeError, ValueError):
+            pass
+        out.append(it)
+    return out
 
 
 def price_text(it):
-    p = it.get("price")
-    if isinstance(p, dict):
-        return f"{p.get('amount')} {p.get('currency_code', 'SEK')}"
-    return f"{p} SEK"
+    try:
+        return f"{round(float((it.get('price') or {}).get('amount'))):d} kr"
+    except (TypeError, ValueError):
+        return "pris okänt"
 
 
 def notify(it, keyword):
     if not NTFY_TOPIC:
         print("NTFY_TOPIC saknas, hoppar över notis")
         return
-    photo = (it.get("photo") or {}).get("url")
-    url = it.get("url") or f"{BASE}/items/{it['id']}"
+    photos = it.get("photos") or []
+    photo = (photos[0].get("url") if photos else None) or it.get("thumbnailUrl")
+    url = it.get("url") or f"/items/{it['id']}"
+    if url.startswith("/"):
+        url = BASE + url
+    size = it.get("sizeTitle") or it.get("size_title")
+    message = it.get("title", "")
+    if size:
+        message += f"\nStorlek: {size}"
     payload = {
         "topic": NTFY_TOPIC,
         "title": f"{keyword}: {price_text(it)}",
-        "message": f"{it.get('title', '')}\nStorlek: {it.get('size_title') or '–'}",
+        "message": message,
         "click": url,
         "tags": ["shopping"],
     }
@@ -97,18 +121,19 @@ def notify(it, keyword):
 def main():
     test_mode = "--test" in sys.argv
     seen = load_seen()
-    first_run = seen is None
-    seen = seen or []
+    first_run = not seen
     seen_set = set(seen)
 
     s = get_session()
     new_count = 0
+    ok = 0
     for cfg in SEARCHES:
         try:
             items = search(s, cfg["keyword"], cfg["max_price"])
         except Exception as e:
             print(f"Fel vid sökning på {cfg['keyword']}: {e}")
             continue
+        ok += 1
         print(f"{cfg['keyword']}: {len(items)} träffar")
         for it in reversed(items):  # äldst först, så notiserna kommer i ordning
             iid = it["id"]
@@ -124,6 +149,8 @@ def main():
             notify(items[0], cfg["keyword"] + " (test)")
         time.sleep(2)
 
+    if ok == 0:
+        sys.exit("Alla sökningar misslyckades")
     save_seen(seen)
     print("Första körningen: sparade befintliga annonser utan notiser."
           if first_run else f"Skickade {new_count} notiser.")

@@ -30,6 +30,7 @@ jobs:
       - name: Kolla Vinted
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          DEBUG_KEYS: ${{ inputs.test && '1' || '' }}
         run: python vinted_watch.py ${{ inputs.test && '--test' || '' }}
       - name: Spara sedda annonser
         run: |
