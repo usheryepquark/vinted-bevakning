@@ -13,20 +13,33 @@ SEARCHES = [
     {"keyword": "Balenciaga", "max_price": 800},
     {"keyword": "Prada", "max_price": 800},
 ]
-# Annonser vars titel innehåller något av dessa ord hoppas över (gäller alla sökningar).
-# Del av ord räcker: "kosmetyczk" fångar både kosmetyczka och kosmetyczki.
+# Annonser där titeln eller märket innehåller något av dessa ord hoppas över.
+# Ett ord utan * måste stå som eget ord ("bok" fångar "bok" men inte "bokmärke").
+# Ett ord med * räcker som början ("kosmetyczk*" fångar kosmetyczka, kosmetyczki).
 EXCLUDE = [
-    # svenska
-    "sminkväska", "sminkväskor", "necessär", "toalettväska", "kosmetikväska", "sminkpåse",
-    # danska
-    "makeuptaske", "make-up taske", "toilettaske", "kosmetiktaske", "necessær",
-    # engelska
-    "makeup bag", "make-up bag", "make up bag", "cosmetic bag", "cosmetics bag",
-    "toiletry bag", "wash bag", "washbag", "vanity case", "necessaire",
-    # polska
-    "kosmetyczk",
-    # finska
-    "meikkipussi", "meikkilaukku", "kosmetiikkalaukku", "toilettilaukku",
+    # --- Sminkväskor och necessärer ---
+    "sminkväsk*", "necessär*", "toalettväsk*", "kosmetikväsk*", "sminkpåse*",    # sv
+    "makeuptask*", "make-up task*", "toilettask*", "kosmetiktask*", "necessær*",  # da
+    "makeup bag*", "make-up bag*", "make up bag*", "cosmetic bag*", "cosmetics bag*",
+    "toiletry bag*", "wash bag*", "washbag*", "vanity case*", "necessaire*",      # en
+    "kosmetyczk*",                                                                # pl
+    "meikkipussi*", "meikkilaukku*", "kosmetiikkalaukku*", "toilettilaukku*",     # fi
+
+    # --- Parfym ---
+    "parfym*", "parfum*", "doft",                                                 # sv
+    "parfume*", "duft",                                                           # da
+    "perfum*", "fragrance*", "eau de", "cologne", "edt", "edp",                   # en + pl
+    "hajuvesi*", "hajuvede*", "tuoksu",                                           # fi
+
+    # --- Böcker ---
+    "bok", "boken", "böcker*",                                                    # sv
+    "bog", "bogen", "bøger*",                                                     # da
+    "book", "books", "coffee table",                                              # en
+    "książk*", "ksiazk*",                                                         # pl
+    "kirja", "kirjat", "kirjan",                                                  # fi
+
+    # --- Märken ---
+    "h&m", "h & m", "h&amp;m", "hennes & mauritz", "primark*", "shein*",
 ]
 BASE = "https://www.vinted.se"
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
@@ -41,6 +54,18 @@ HEADERS = {
     ),
     "Accept-Language": "sv-SE,sv;q=0.9,en;q=0.8",
 }
+
+
+def _exclude_pattern(words):
+    parts = []
+    for w in words:
+        prefix = w.endswith("*")
+        w = re.escape(w.rstrip("*").lower())
+        parts.append(r"(?<!\w)" + w + ("" if prefix else r"(?!\w)"))
+    return re.compile("|".join(parts), re.IGNORECASE)
+
+
+EXCLUDE_RE = _exclude_pattern(EXCLUDE)
 
 
 def load_seen():
@@ -87,10 +112,10 @@ def search(s, keyword, max_price):
         print("fält:", sorted(items[0].keys()))
 
     kw = keyword.lower()
-    exclude = [w.lower() for w in EXCLUDE]
     out = []
     for it in items:
-        if any(w in (it.get("title") or "").lower() for w in exclude):
+        text = (it.get("title") or "") + " " + json.dumps(it.get("itemBox") or {}, ensure_ascii=False)
+        if EXCLUDE_RE.search(text):
             continue
         brand = json.dumps(it.get("itemBox") or {}, ensure_ascii=False)
         if kw not in brand.lower() and kw not in (it.get("title") or "").lower():
