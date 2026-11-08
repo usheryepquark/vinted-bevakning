@@ -83,10 +83,19 @@ COSMETICS = [
     "touche eclat", "all hours",
 ]
 
+# Sneakers (gäller alla sökningar).
 SNEAKERS = [
     "sneaker*", "trainer", "trainers", "gympaskor*", "sportskor*", "löparskor*",
     "sneakersy", "trampki*", "buty sportowe", "adidasy", "tennarit", "lenkkarit",
-    "b22", "b23", "b27", "b30", "b33", "b57", "walk'n'dior", "walk n dior",
+    "b22", "b23", "b27", "b30", "b33", "b57", "walk'n'dior", "walk n dior",          # Dior
+    "tennisskor*", "sportsko*", "løbesko*", "joggesko*", "tennissko*",           # sv/da
+    "tennis shoe*", "running shoe*", "runner", "runners", "high top*", "high-top*",
+    "hi top*", "low top*", "low-top*", "chuck*", "converse",                     # en
+    "buty do biegania", "juoksukengät*", "urheilukengät*",                       # pl/fi
+    "triple s", "speed", "defender*", "3xl", "10xl", "x-pander", "track led",    # Balenciaga
+    "geobasket*", "ramones", "dunks", "jumbo lace*", "turbodrk*", "geth runner*",  # Rick Owens
+    "rhyton", "screener", "cloudbust*", "america's cup", "americas cup",          # Gucci/Prada
+    "b-court", "unicorn",                                                         # Balmain
 ]
 
 # Barnkläder (gäller alla sökningar, plus barnstorlekar som "3 år" och "12 mån").
@@ -163,7 +172,11 @@ SEARCHES = [
     {"label": "Balenciaga moto", "query": "Balenciaga motorcycle bag", **BALENCIAGA_MOTO},
     {"label": "Balenciaga Giant", "query": "Balenciaga giant", **BALENCIAGA_MOTO},
     {"label": "Dior", "query": "Dior", "match": ["dior"],
-     "exclude": COSMETICS + SNEAKERS},
+     "exclude": COSMETICS},
+    {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS},
+    {"label": "Balmain", "query": "Balmain", "match": ["balmain"], "exclude": COSMETICS},
+    {"label": "Pierre Balmain", "query": "Pierre Balmain", "match": ["balmain"],
+     "exclude": COSMETICS},
 ]
 
 BASE = "https://www.vinted.se"
@@ -195,7 +208,7 @@ def word_pattern(words):
     return re.compile("|".join(parts), re.IGNORECASE)
 
 
-EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING)
+EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS)
 for cfg in SEARCHES:
     cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
     cfg["_exclude"] = word_pattern(cfg.get("exclude"))
