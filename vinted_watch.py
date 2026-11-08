@@ -130,6 +130,8 @@ PACKAGING = [
 #  exclude_brands: annonsen sorteras bort om märket är något av dessa
 #  require:        minst ett av orden måste stå i titeln (t.ex. modellnamn)
 #  max_price:      eget maxpris för just den sökningen
+#  country:        bara säljare från detta land, t.ex. "SE" (kollas på säljarens profil)
+#  brand_required: False = märket behöver inte stämma, räcker att titeln matchar
 RICK = {
     "match": ["rick owens", "drkshdw", "drk shdw", "lilies"],
     "exclude_brands": ["avant garde", "japan style"],
@@ -174,6 +176,10 @@ BALENCIAGA_MOTO = {
 }
 
 SEARCHES = [
+    {"label": "925 silver", "query": "925 silver", "max_price": 250, "country": "SE",
+     "brand_required": False,
+     "match": ["925", "sterling*", "sterlingsilver*", "äkta silver*", "silver 925",
+               "srebro 925", "sølv 925", "hopea 925"]},
     {"label": "Gucci", "query": "Gucci", "match": ["gucci"], "exclude": ["ace"]},
     {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"], "exclude": SHOES},
     {"label": "Prada", "query": "Prada", "match": ["prada"]},
@@ -303,11 +309,14 @@ def keep(it, cfg, max_price):
         return False
     if KIDS_SIZE_RE.search(it["_size"]):
         return False
-    if brand:
-        # har annonsen ett märke måste det vara rätt märke ("Gucci-stil" från Zara åker bort)
-        if not cfg["_match"].search(brand):
+    if cfg.get("brand_required", True):
+        if brand:
+            # har annonsen ett märke måste det vara rätt märke ("Gucci-stil" från Zara åker bort)
+            if not cfg["_match"].search(brand):
+                return False
+        elif not cfg["_match"].search(title):
             return False
-    elif not cfg["_match"].search(title):
+    elif not cfg["_match"].search(text):
         return False
     try:
         if float((it.get("price") or {}).get("amount", 0)) > max_price:
@@ -315,6 +324,30 @@ def keep(it, cfg, max_price):
     except (TypeError, ValueError):
         pass
     return True
+
+
+_COUNTRY_CACHE = {}
+
+
+def seller_country(s, it):
+    """Säljarens landskod (t.ex. "SE", "PL") från profilsidan."""
+    uid = (it.get("user") or {}).get("id")
+    if not uid:
+        return None
+    if uid not in _COUNTRY_CACHE:
+        try:
+            r = s.get(f"{BASE}/member/{uid}", timeout=30)
+            m = re.search(r'"country_code"\s*:\s*"([A-Z]{2})"', _flight(r.text) + r.text)
+            _COUNTRY_CACHE[uid] = m.group(1) if m else None
+        except Exception:
+            _COUNTRY_CACHE[uid] = None
+        time.sleep(1)
+    return _COUNTRY_CACHE[uid]
+
+
+def country_ok(s, it, cfg):
+    want = cfg.get("country")
+    return not want or seller_country(s, it) == want
 
 
 def price_text(it):
@@ -385,6 +418,8 @@ def send_recent(minutes):
     cutoff = start_id - minutes * per_min
     print(f"~{per_min:.0f} nya annonser/min på Vinted, gräns id {cutoff:.0f}")
     recent = sorted((v for k, v in found.items() if k >= cutoff), key=lambda x: x[0]["id"])
+    cfg_by_label = {c["label"]: c for c in SEARCHES}
+    recent = [(it, label) for it, label in recent if country_ok(s, it, cfg_by_label[label])]
     for it, label in recent:
         notify(it, label)
         print(f"  skickad: {label} | {it['title'][:60]}")
@@ -418,7 +453,7 @@ def main():
                 continue
             seen.append(it["id"])
             seen_set.add(it["id"])
-            if not first_time:
+            if not first_time and country_ok(s, it, cfg):
                 notify(it, cfg["label"])
                 new_count += 1
                 time.sleep(1)
