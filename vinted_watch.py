@@ -89,13 +89,29 @@ SNEAKERS = [
     "b22", "b23", "b27", "b30", "b33", "b57", "walk'n'dior", "walk n dior",
 ]
 
+# Barnkläder (gäller alla sökningar, plus barnstorlekar som "3 år" och "12 mån").
+# Medvetet utan "kid" (kid leather) och "baby*" (babydoll).
 KIDS = [
-    "barn*", "baby*", "bebis*", "kids", "kid", "child*", "junior*", "toddler*",
-    "flicka", "flickor", "pojke", "pojkar",                                       # sv/en
+    "barn", "barnen", "barnkläder*", "barnstorlek*", "baby", "babykläder*",
+    "bebis*", "kids", "child*", "junior*", "toddler*",
+    "flicka", "flickor", "pojke", "pojkar", "girls", "boys",                      # sv/en
     "børn*", "børne*", "pige", "piger", "dreng*",                                 # da
-    "dziecięc*", "dziecko", "dzieci", "dziewczyn*", "dziewczęc*", "chłop*",
-    "niemowl*",                                                                   # pl
+    "dziecięc*", "dziecko", "dzieci", "dziewczyn*", "dziewczęc*", "chłopięc*",
+    "dla chłopca", "niemowl*",                                                    # pl
     "lasten", "vauva*", "tyttö*", "poika*",                                       # fi
+]
+
+# Förpackningar och presentpåsar (gäller alla sökningar).
+# Medvetet utan "box" och "dustbag", eftersom skor och väskor ofta säljs "med box".
+PACKAGING = [
+    "presentask*", "presentpåse*", "papperspåse*", "shoppingpåse*", "tom kartong",
+    "tom låda", "tom ask", "tomma kartong*", "kartong", "kartongen",               # sv
+    "gaveæske*", "gavepose*", "papirpose*", "tom æske", "emballage",              # da
+    "gift box*", "gift bag*", "paper bag*", "paper shopping bag*", "shopping bag",
+    "empty box*", "box only", "only box", "packaging", "ribbon*",                 # en
+    "pudełko", "pudełka", "torebka papierowa", "torba papierowa",
+    "torebka prezentowa", "torba prezentowa", "opakowanie", "wstążk*",            # pl
+    "lahjapussi*", "lahjarasia*", "paperikassi*", "tyhjä laatikko", "pakkaus",    # fi
 ]
 
 # --- Sökningarna ---------------------------------------------------------
@@ -103,7 +119,6 @@ KIDS = [
 #  match:          minst ett av orden måste finnas i titel eller märke
 #  exclude:        extra ord som sorterar bort annonsen (titel eller märke)
 #  exclude_brands: annonsen sorteras bort om märket är något av dessa
-#  kids_sizes:     False = sortera bort barnstorlekar (t.ex. "3 år", "12 mån")
 RICK = {
     "match": ["rick owens", "drkshdw", "drk shdw", "lilies"],
     "exclude_brands": ["avant garde", "japan style"],
@@ -125,7 +140,7 @@ SEARCHES = [
     {"label": "Ann Demeulemeester", "query": "Ann Demeulemeester",
      "match": ["ann demeulemeester", "demeulemeester"]},
     {"label": "Dior", "query": "Dior", "match": ["dior"],
-     "exclude": COSMETICS + SNEAKERS + KIDS, "kids_sizes": False},
+     "exclude": COSMETICS + SNEAKERS},
 ]
 
 BASE = "https://www.vinted.se"
@@ -157,7 +172,7 @@ def word_pattern(words):
     return re.compile("|".join(parts), re.IGNORECASE)
 
 
-EXCLUDE_RE = word_pattern(EXCLUDE)
+EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING)
 for cfg in SEARCHES:
     cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
     cfg["_exclude"] = word_pattern(cfg.get("exclude"))
@@ -228,7 +243,7 @@ def keep(it, cfg, max_price):
         return False
     if any(b in brand.lower() for b in cfg["_bad_brands"]):
         return False
-    if cfg.get("kids_sizes") is False and KIDS_SIZE_RE.search(it["_size"]):
+    if KIDS_SIZE_RE.search(it["_size"]):
         return False
     if brand:
         # har annonsen ett märke måste det vara rätt märke ("Gucci-stil" från Zara åker bort)
