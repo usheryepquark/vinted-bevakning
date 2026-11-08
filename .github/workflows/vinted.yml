@@ -9,6 +9,10 @@ on:
         description: "Skicka en testnotis per sökord"
         type: boolean
         default: false
+      recent_minutes:
+        description: "Skicka notiser för annonser från senaste X minuterna (0 = av)"
+        type: number
+        default: 0
 
 permissions:
   contents: write
@@ -31,8 +35,14 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           DEBUG_KEYS: ${{ inputs.test && '1' || '' }}
-        run: python vinted_watch.py ${{ inputs.test && '--test' || '' }}
+        run: |
+          if [ "${{ inputs.recent_minutes || 0 }}" != "0" ]; then
+            python vinted_watch.py --recent ${{ inputs.recent_minutes }}
+          else
+            python vinted_watch.py ${{ inputs.test && '--test' || '' }}
+          fi
       - name: Spara sedda annonser
+        if: ${{ !inputs.recent_minutes }}
         run: |
           git config user.name "vinted-bot"
           git config user.email "actions@users.noreply.github.com"

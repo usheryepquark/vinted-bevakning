@@ -291,7 +291,65 @@ def notify(it, label):
     requests.post("https://ntfy.sh", json=payload, timeout=15)
 
 
+def _find_ts(obj, depth=0):
+    if depth > 4:
+        return None
+    if isinstance(obj, dict):
+        for k, val in obj.items():
+            if k in ("timestamp", "createdAt", "created_at_ts") and isinstance(val, (int, float)):
+                return val / 1000 if val > 1e12 else val
+            r = _find_ts(val, depth + 1)
+            if r:
+                return r
+    elif isinstance(obj, list):
+        for val in obj[:2]:
+            r = _find_ts(val, depth + 1)
+            if r:
+                return r
+    return None
+
+
+def item_time(it):
+    """Uppladdningstid (unix-sekunder) om Vinted skickar med den, annars None."""
+    return _find_ts(it.get("photos")) or _find_ts({k: it.get(k) for k in ("createdAt", "created_at_ts")})
+
+
+def send_recent(minutes):
+    """Skickar notiser för annonser som klarar filtren och laddats upp senaste X minuterna.
+    Rör inte listan över sedda annonser."""
+    cutoff = time.time() - minutes * 60
+    s = get_session()
+    sent, sent_ids, unknown = 0, set(), 0
+    for cfg in SEARCHES:
+        max_price = cfg.get("max_price", MAX_PRICE)
+        try:
+            items = [it for it in fetch(s, cfg["query"], max_price) if keep(it, cfg, max_price)]
+        except Exception as e:
+            print(f"Fel vid sökning på {cfg['label']}: {e}")
+            continue
+        if items and sent == 0 and unknown == 0:
+            print("fotofält:", sorted((items[0].get("photos") or [{}])[0].keys()))
+        hits = 0
+        for it in items:
+            ts = item_time(it)
+            if ts is None:
+                unknown += 1
+                continue
+            if ts >= cutoff and it["id"] not in sent_ids:
+                sent_ids.add(it["id"])
+                notify(it, cfg["label"])
+                sent += 1
+                hits += 1
+                time.sleep(1)
+        print(f"{cfg['label']}: {hits} senaste {minutes} min")
+        time.sleep(2)
+    print(f"Skickade {sent} notiser. Annonser utan tidsstämpel: {unknown}")
+
+
 def main():
+    if "--recent" in sys.argv:
+        send_recent(int(sys.argv[sys.argv.index("--recent") + 1]))
+        return
     test_mode = "--test" in sys.argv
     seen, seeded = load_state()
     seen_set, seeded = set(seen), set(seeded)
