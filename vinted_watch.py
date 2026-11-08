@@ -33,6 +33,7 @@ EXCLUDE = [
     "perfum*", "fragrance*", "eau de", "cologne", "edt", "edp",                   # en + pl
     "zapach*", "woda toaletowa", "woda perfumowana",                              # pl
     "hajuvesi*", "hajuvede*", "tuoksu",                                           # fi
+    "paradoxe", "guilty",                                                         # namn
 
     # Böcker
     "bok", "boken", "böcker*",                                                    # sv
@@ -141,7 +142,8 @@ HEADERS = {
     "Accept-Language": "sv-SE,sv;q=0.9,en;q=0.8",
 }
 
-KIDS_SIZE_RE = re.compile(r"(?<!\w)(år|mån|months?|years?)(?!\w)", re.IGNORECASE)
+KIDS_SIZE_RE = re.compile(r"(?<!\w)(år|mån\w*|months?|years?)(?!\w)", re.IGNORECASE)
+VOLUME_RE = re.compile(r"\d\s?ml(?!\w)", re.IGNORECASE)  # "100ml", "50 ml" = parfym/kosmetik
 
 
 def word_pattern(words):
@@ -220,7 +222,7 @@ def keep(it, cfg, max_price):
     title = it.get("title") or ""
     brand = it["_brand"]
     text = f"{title} {brand}"
-    if EXCLUDE_RE.search(text):
+    if EXCLUDE_RE.search(text) or VOLUME_RE.search(title):
         return False
     if cfg["_exclude"] and cfg["_exclude"].search(text):
         return False
