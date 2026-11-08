@@ -13,6 +13,21 @@ SEARCHES = [
     {"keyword": "Balenciaga", "max_price": 800},
     {"keyword": "Prada", "max_price": 800},
 ]
+# Annonser vars titel innehåller något av dessa ord hoppas över (gäller alla sökningar).
+# Del av ord räcker: "kosmetyczk" fångar både kosmetyczka och kosmetyczki.
+EXCLUDE = [
+    # svenska
+    "sminkväska", "sminkväskor", "necessär", "toalettväska", "kosmetikväska", "sminkpåse",
+    # danska
+    "makeuptaske", "make-up taske", "toilettaske", "kosmetiktaske", "necessær",
+    # engelska
+    "makeup bag", "make-up bag", "make up bag", "cosmetic bag", "cosmetics bag",
+    "toiletry bag", "wash bag", "washbag", "vanity case", "necessaire",
+    # polska
+    "kosmetyczk",
+    # finska
+    "meikkipussi", "meikkilaukku", "kosmetiikkalaukku", "toilettilaukku",
+]
 BASE = "https://www.vinted.se"
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 SEEN_FILE = "seen.json"
@@ -72,8 +87,11 @@ def search(s, keyword, max_price):
         print("fält:", sorted(items[0].keys()))
 
     kw = keyword.lower()
+    exclude = [w.lower() for w in EXCLUDE]
     out = []
     for it in items:
+        if any(w in (it.get("title") or "").lower() for w in exclude):
+            continue
         brand = json.dumps(it.get("itemBox") or {}, ensure_ascii=False)
         if kw not in brand.lower() and kw not in (it.get("title") or "").lower():
             continue
