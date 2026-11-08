@@ -178,6 +178,10 @@ BALENCIAGA_MOTO = {
 SEARCHES = [
     {"label": "925 silver", "query": "925 silver", "max_price": 250, "country": "SE",
      "brand_required": False,
+     # försilvrat och silverfärgat är inte äkta silver (guldpläterat 925 är det, så det får vara kvar)
+     "exclude": ["silverpläter*", "försilvr*", "silverfärg*", "silver plated*", "silver-plated*",
+                 "silverplated*", "silver tone*", "silver-tone*", "silver color*", "silver colour*",
+                 "posrebrz*", "forsølv*", "sølvbelagt*", "hopeoitu*", "hopeanvärinen*"],
      "match": ["925", "sterling*", "sterlingsilver*", "äkta silver*", "silver 925",
                "srebro 925", "sølv 925", "hopea 925"]},
     {"label": "Gucci", "query": "Gucci", "match": ["gucci"], "exclude": ["ace"]},
