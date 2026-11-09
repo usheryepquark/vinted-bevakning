@@ -440,6 +440,8 @@ def price_text(it):
 
 
 def notify(it, label):
+    if os.environ.get("SILENT"):
+        return
     if not NTFY_TOPIC:
         print("NTFY_TOPIC saknas, hoppar över notis")
         return

@@ -9,6 +9,10 @@ on:
         description: "Skicka en testnotis per sökord"
         type: boolean
         default: false
+      silent:
+        description: "Spara nya annonser som sedda utan att skicka notiser"
+        type: boolean
+        default: false
       recent_minutes:
         description: "Skicka notiser för annonser från senaste X minuterna (0 = av)"
         type: number
@@ -36,6 +40,7 @@ jobs:
       - name: Kolla Vinted
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SILENT: ${{ inputs.silent && '1' || '' }}
           DEBUG_KEYS: ${{ inputs.test && '1' || '' }}
         run: |
           if [ "${{ inputs.recent_minutes || 0 }}" != "0" ]; then
