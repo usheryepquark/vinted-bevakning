@@ -269,7 +269,7 @@ SEARCHES = [
 BASE = "https://www.vinted.se"
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 SEEN_FILE = "seen.json"
-MAX_SEEN = 6000
+MAX_SEEN = 20000
 # =========================================================================
 
 HEADERS = {
@@ -400,6 +400,14 @@ def keep(it, cfg, max_price):
     return True
 
 
+def signature(it):
+    """Samma säljare + samma titel + samma pris = samma sak, även om annonsen
+    lagts upp på nytt med nytt nummer."""
+    uid = (it.get("user") or {}).get("id")
+    price = (it.get("price") or {}).get("amount")
+    return f"{uid}|{(it.get('title') or '').strip().lower()}|{price}"
+
+
 _COUNTRY_CACHE = {}
 
 
@@ -523,10 +531,11 @@ def main():
         first_time = cfg["query"] not in seeded  # ny sökning: spara utan notiser
         print(f"{cfg['label']}: {len(items)} träffar" + (" (första gången, inga notiser)" if first_time else ""))
         for it in reversed(items):  # äldst först, så notiserna kommer i ordning
-            if it["id"] in seen_set:
+            sig = signature(it)
+            if it["id"] in seen_set or sig in seen_set:
                 continue
-            seen.append(it["id"])
-            seen_set.add(it["id"])
+            seen += [it["id"], sig]
+            seen_set.update((it["id"], sig))
             if not first_time and country_ok(s, it, cfg):
                 notify(it, cfg["label"])
                 new_count += 1

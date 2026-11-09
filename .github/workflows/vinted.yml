@@ -27,6 +27,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main  # alltid senaste seen.json, även om körningen fick vänta i kö
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -42,10 +44,15 @@ jobs:
             python vinted_watch.py ${{ inputs.test && '--test' || '' }}
           fi
       - name: Spara sedda annonser
-        if: ${{ !inputs.recent_minutes }}
+        if: ${{ always() }}
         run: |
           git config user.name "vinted-bot"
           git config user.email "actions@users.noreply.github.com"
           git add seen.json
-          git diff --cached --quiet || git commit -m "uppdatera seen.json"
-          git push
+          git diff --cached --quiet && exit 0
+          git commit -m "uppdatera seen.json"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -X theirs origin main && git push && exit 0
+            sleep 5
+          done
+          exit 1
