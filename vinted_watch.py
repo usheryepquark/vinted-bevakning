@@ -333,6 +333,14 @@ SHOES = [
     "pool slide*", "stretch boot*", "army boot*",                                 # modeller
 ]
 
+# Skor, för att känna igen skoannonser när en sökning har shoe_size.
+SHOE_WORDS = SHOES + SANDALS + [
+    "monolith", "mary jane*", "ballerin*", "oxford*", "derby", "derbies", "brogue*",
+    "mokasin*", "mockasin*", "moccasin*", "kilklack*", "platåsko*", "stiletto*",
+    "ankle boot*", "chelsea boot*", "combat boot*", "kozaczki", "półbuty", "baleriny",
+    "szpilk*", "nilkkuri*", "korkokeng*", "støvlet*", "pumps",
+]
+
 # Väskor (används för Givenchy: titeln måste innehålla något av dessa).
 BAGS = [
     "väsk*", "handväsk*", "axelväsk*", "kvällsväsk*", "kuvertväsk*", "midjeväsk*",
@@ -381,16 +389,21 @@ SEARCHES = [
                  "posrebrz*", "forsølv*", "sølvbelagt*", "hopeoitu*", "hopeanvärinen*"],
      "match": ["925", "sterling*", "sterlingsilver*", "äkta silver*", "silver 925",
                "srebro 925", "sølv 925", "hopea 925"]},
-    {"label": "Gucci", "query": "Gucci", "match": ["gucci"], "exclude": ["ace"]},
+    {"label": "Gucci", "query": "Gucci", "match": ["gucci"],
+     "exclude": ["ace", "t-shirt*", "tshirt*", "t shirt*", "tee", "tees", "t-paita*",
+                 "koszulk*", "t-shirty", "tshirty"]},
     {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"],
      "exclude": SHOES + BRACELETS},
     {"label": "Prada", "query": "Prada", "match": ["prada"],
-     "exclude": ["re-nylon*", "re nylon*", "renylon*", "re-edition nylon*"]},
+     "exclude": ["re-nylon*", "re nylon*", "renylon*", "re-edition nylon*"],
+     "shoe_size": "39"},
     {"label": "Rick Owens", "query": "Rick Owens", **RICK},
     {"label": "DRKSHDW", "query": "DRKSHDW", **RICK},
     {"label": "Rick Owens Lilies", "query": "Rick Owens Lilies", **RICK},
-    {"label": "Saint Laurent", "query": "Saint Laurent", **SAINT_LAURENT},
-    {"label": "YSL", "query": "YSL", **SAINT_LAURENT},
+    {"label": "Saint Laurent", "query": "Saint Laurent", **SAINT_LAURENT, "require": BAGS},
+    {"label": "Yves Saint Laurent", "query": "Yves Saint Laurent", **SAINT_LAURENT,
+     "require": BAGS},
+    {"label": "YSL", "query": "YSL", **SAINT_LAURENT, "require": BAGS},
     {"label": "Ann Demeulemeester", "query": "Ann Demeulemeester",
      "match": ["ann demeulemeester", "demeulemeester"]},
     {"label": "Balenciaga City", "query": "Balenciaga City", **BALENCIAGA_MOTO},
@@ -406,13 +419,8 @@ SEARCHES = [
     {"label": "Polène", "query": "Polene", "match": ["polène", "polene", "polène paris"]},
     {"label": "Mulberry", "query": "Mulberry", "match": ["mulberry"]},
     {"label": "Louis Vuitton", "query": "Louis Vuitton", "match": ["louis vuitton", "vuitton"]},
-    {"label": "Dior", "query": "Dior", "match": ["dior"],
-     "exclude": COSMETICS},
     {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS,
      "require": BAGS},
-    {"label": "Balmain", "query": "Balmain", "match": ["balmain"], "exclude": COSMETICS},
-    {"label": "Pierre Balmain", "query": "Pierre Balmain", "match": ["balmain"],
-     "exclude": COSMETICS},
 ]
 
 BASE = "https://www.vinted.se"
@@ -448,11 +456,15 @@ EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS + HAIR + TIES
                           + EYEWEAR_CASES + SANDALS + WALLETS + MEDIA
                           + ART + SCARVES + MAKEUP_EXTRA + PERFUME_NAMES
                           + COSMETICS + HAIRCARE + CAPS + BEAUTY_EXTRA)
-# Lådor och boxar, men inte "med låda", "with box", "original box" osv. och inte "box bag".
+SHOE_RE = word_pattern(SHOE_WORDS)
+
+# Lådor, boxar och påsar, men inte "med låda", "with box", "original box" osv. och inte "box bag".
 BOX_RE = re.compile(
     r"(?<!med )(?<!with )(?<!inkl )(?<!inkl\. )(?<!incl )(?<!incl\. )(?<!och )(?<!and )"
     r"(?<!\+ )(?<!w/ )(?<!original )(?<!orginal )(?<!& )"
-    r"(?<!\w)(låda|lådor|lådan|lådorna|ask|askar|asken|box|boxes|æske|æsker|laatikko|laatikot|rasia)"
+    r"(?<!\w)(låda|lådor|lådan|lådorna|ask|askar|asken|box|boxes|æske|æsker|laatikko|laatikot|rasia"
+    r"|påse|påsar|påsen|påsarna|dammpåse|dammpåsar|tygpåse|tygpåsar|dustbag|dustbags|dust bag|dust bags"
+    r"|pose|poser|støvpose|støvposer|pussi|pussit|pölypussi|worek|woreczek|worki|reklamówka)"
     r"(?![\w-])(?!\s*(bag|väska|taske|torebka|laukku))",
     re.IGNORECASE)
 # "Gucci cap", "caps" osv, men inte "cap sleeve" eller "cap toe".
@@ -467,6 +479,8 @@ for cfg in SEARCHES:
     cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
     cfg["_exclude"] = word_pattern(cfg.get("exclude"))
     cfg["_require"] = word_pattern(cfg.get("require"))
+    cfg["_shoe_size"] = (re.compile(r"(?<![\d.,])" + re.escape(cfg["shoe_size"]) + r"(?![\d.,])")
+                         if cfg.get("shoe_size") else None)
     cfg["_exclude_re"] = re.compile(cfg["exclude_re"], re.IGNORECASE) if cfg.get("exclude_re") else None
     cfg["_bad_brands"] = [b.lower() for b in cfg.get("exclude_brands", [])]
 
@@ -541,6 +555,9 @@ def keep(it, cfg, max_price):
     if cfg["_exclude_re"] and cfg["_exclude_re"].search(title):
         return False
     if cfg["_require"] and not cfg["_require"].search(title):
+        return False
+    if cfg["_shoe_size"] and SHOE_RE.search(title) \
+            and not cfg["_shoe_size"].search(it["_size"]):
         return False
     if KIDS_SIZE_RE.search(it["_size"]):
         return False
