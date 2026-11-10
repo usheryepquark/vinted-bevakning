@@ -233,6 +233,10 @@ PERFUME_NAMES = [
     "xeryus", "organza", "hot couture", "givenchy pi", "play intense",
     # Balmain
     "carbone de balmain", "ivoire de balmain", "eau d'ivoire", "vent vert", "jolie madame",
+    # Louis Vuitton
+    "imagination", "ombre nomade", "l'immensité", "afternoon swim", "attrape-rêves",
+    "attrape-reves", "spell on you", "météore", "nouveau monde", "cœur battant",
+    "coeur battant", "rose des vents", "california dream", "sun song", "pacific chill",
     # Bottega Veneta
     "knot eau", "illusione", "parco palladiano", "bottega veneta pour homme",
 ]
@@ -258,6 +262,8 @@ SNEAKERS = [
     "spectre", "urban street", "tk-360", "tk-mx", "city sport", "marshmallow",    # Givenchy
     "vintage runner*",                                                            # Rick Owens
     "orbit", "speedster",                                                         # Bottega
+    "run away", "runaway", "frontrow", "front row", "archlight", "time out",
+    "lv trainer*", "lv skate*", "lv runner*", "beverly hills", "rivoli",          # Louis Vuitton
 ]
 
 # Barnkläder (gäller alla sökningar, plus barnstorlekar som "3 år" och "12 mån").
@@ -399,6 +405,7 @@ SEARCHES = [
      "match": ["gianni chiarini", "chiarini", "gianni charini", "charini"]},
     {"label": "Polène", "query": "Polene", "match": ["polène", "polene", "polène paris"]},
     {"label": "Mulberry", "query": "Mulberry", "match": ["mulberry"]},
+    {"label": "Louis Vuitton", "query": "Louis Vuitton", "match": ["louis vuitton", "vuitton"]},
     {"label": "Dior", "query": "Dior", "match": ["dior"],
      "exclude": COSMETICS},
     {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS,
