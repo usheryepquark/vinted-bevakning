@@ -327,6 +327,24 @@ SHOES = [
     "pool slide*", "stretch boot*", "army boot*",                                 # modeller
 ]
 
+# Väskor (används för Givenchy: titeln måste innehålla något av dessa).
+BAGS = [
+    "väsk*", "handväsk*", "axelväsk*", "kvällsväsk*", "kuvertväsk*", "midjeväsk*",
+    "datorväsk*", "weekendväsk*", "resväsk*", "ryggsäck*", "shoppingväsk*",          # sv
+    "taske*", "håndtaske*", "skuldertaske*", "crossbodytaske*", "rygsæk*",          # da
+    "bag", "bags", "handbag*", "shoulder bag*", "crossbody*", "cross body*", "tote*",
+    "clutch*", "shopper*", "backpack*", "bucket bag*", "belt bag*", "bum bag*",
+    "satchel*", "hobo", "baguette", "messenger*", "pouch*", "purse", "pochette*",
+    "sac", "weekender", "duffle*", "duffel*",                                       # en/fr
+    "torebk*", "torba", "torby", "torebka", "plecak*", "kopertówk*", "listonoszk*",
+    "nerka", "saszetk*", "shopperk*",                                               # pl
+    "laukku*", "käsilaukku*", "olkalaukku*", "reppu*", "pikkulaukku*",              # fi
+    # Givenchy-modeller
+    "antigona", "pandora", "nightingale", "voyou", "cut out", "cut-out", "kenny",
+    "whip", "g-tote", "4g", "mystic", "lucrezia", "horizon", "eden", "obsedia",
+    "moon cut", "shark lock bag", "g-cube", "g-essentials",
+]
+
 # Armband (används för Balenciaga).
 BRACELETS = [
     "armband*", "armring*", "bracelet*", "bangle*", "armbånd*", "armring",
@@ -382,7 +400,8 @@ SEARCHES = [
     {"label": "Polène", "query": "Polene", "match": ["polène", "polene", "polène paris"]},
     {"label": "Dior", "query": "Dior", "match": ["dior"],
      "exclude": COSMETICS},
-    {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS},
+    {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS,
+     "require": BAGS},
     {"label": "Balmain", "query": "Balmain", "match": ["balmain"], "exclude": COSMETICS},
     {"label": "Pierre Balmain", "query": "Pierre Balmain", "match": ["balmain"],
      "exclude": COSMETICS},
