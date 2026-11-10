@@ -398,6 +398,7 @@ SEARCHES = [
     {"label": "Gianni Chiarini", "query": "Gianni Chiarini",
      "match": ["gianni chiarini", "chiarini", "gianni charini", "charini"]},
     {"label": "Polène", "query": "Polene", "match": ["polène", "polene", "polène paris"]},
+    {"label": "Mulberry", "query": "Mulberry", "match": ["mulberry"]},
     {"label": "Dior", "query": "Dior", "match": ["dior"],
      "exclude": COSMETICS},
     {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS,
