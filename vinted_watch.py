@@ -143,6 +143,47 @@ HAIRCARE = [
     "face mask*", "sheet mask*", "deodorant*", "deo",
 ]
 
+# Tomma solglasögonfodral (gäller alla sökningar). Solglasögon "med fodral" får vara kvar.
+EYEWEAR_CASES = [
+    "glasögonfodral*", "solglasögonfodral*", "glasögonetui*", "glasögonask*",
+    "fodral till solglasögon", "fodral till glasögon", "tomt fodral", "bara fodral*",
+    "endast fodral*", "fodralet",                                                    # sv
+    "brillefoderal*", "brilleetui*", "brillehus*", "brilleæske*",                     # da
+    "sunglasses case*", "sunglass case*", "glasses case*", "eyewear case*",
+    "eyeglass case*", "spectacle case*", "case only", "only case", "empty case*",
+    "just the case", "case for sunglasses", "case for glasses",                       # en
+    "etui na okulary", "etui do okularów", "etui okularowe", "pudełko na okulary",
+    "futerał na okulary", "sam futerał", "samo etui",                                 # pl
+    "silmälasikotelo*", "aurinkolasikotelo*", "lasikotelo*", "pelkkä kotelo",         # fi
+]
+
+# Sandaler och flip flops (gäller alla sökningar).
+SANDALS = [
+    "sandal*", "sandaler", "sandalett*", "flip flop*", "flip-flop*", "flipflop*",
+    "klipklapper*", "klip-klapper*", "sandały*", "sandałk*", "japonki", "klapki",
+    "sandaalit*", "sandaali*", "varvassandaal*", "flipflopit",
+]
+
+# Plånböcker och korthållare (gäller alla sökningar).
+WALLETS = [
+    "plånbok*", "plånböcker*", "korthållare*", "kortfodral*", "kortplånbok*",
+    "myntväsk*", "portmonnä*",                                                        # sv
+    "pung", "pengepung*", "kortholder*", "kortetui*",                                 # da
+    "wallet*", "card holder*", "cardholder*", "card case*", "card wallet*",
+    "coin purse*", "money clip*", "billfold*", "zip around*", "zippy",                 # en
+    "portfel*", "portmonetk*", "etui na karty", "etui na wizytówki",                  # pl
+    "lompakko*", "korttikotelo*", "kolikkukkaro*",                                    # fi
+]
+
+# Böcker och filmer om modehus.
+MEDIA = [
+    "sara gay forden", "sara g forden", "forden", "house of gucci",
+    "devil wears prada", "the devil wears prada", "djävulen bär prada",
+    "djævelen bærer prada", "diabeł ubiera się u prady", "paholainen pukeutuu pradaan",
+    "dvd", "blu-ray", "bluray", "movie", "novel",  # medvetet utan "pocket" och "roman"
+    "inbunden", "hardcover", "paperback",
+]
+
 # Sneakers (gäller alla sökningar).
 SNEAKERS = [
     "sneaker*", "trainer", "trainers", "gympaskor*", "sportskor*", "löparskor*",
@@ -196,7 +237,12 @@ RICK = {
     "match": ["rick owens", "drkshdw", "drk shdw", "lilies"],
     "exclude_brands": ["avant garde", "japan style"],
 }
+# Bälten, men inte bältesväskor ("belt bag", "bältesväska").
+BELT_RE = (r"(?<!\w)(bälte\w*|skärp\w*|belt|belts|pasek|paski|paskiem|bælte\w*|vyö\w*)"
+           r"(?!\s*(bag|väska|taske|torebka|laukku))")
+
 SAINT_LAURENT = {
+    "exclude_re": BELT_RE,
     "match": ["saint laurent", "yves saint laurent", "ysl"],
     "exclude": COSMETICS,
 }
@@ -246,7 +292,8 @@ SEARCHES = [
                "srebro 925", "sølv 925", "hopea 925"]},
     {"label": "Gucci", "query": "Gucci", "match": ["gucci"], "exclude": ["ace"]},
     {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"], "exclude": SHOES},
-    {"label": "Prada", "query": "Prada", "match": ["prada"]},
+    {"label": "Prada", "query": "Prada", "match": ["prada"],
+     "exclude": ["re-nylon*", "re nylon*", "renylon*", "re-edition nylon*"]},
     {"label": "Rick Owens", "query": "Rick Owens", **RICK},
     {"label": "DRKSHDW", "query": "DRKSHDW", **RICK},
     {"label": "Rick Owens Lilies", "query": "Rick Owens Lilies", **RICK},
@@ -296,6 +343,7 @@ def word_pattern(words):
 
 
 EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS + HAIR + TIES
+                          + EYEWEAR_CASES + SANDALS + WALLETS + MEDIA
                           + COSMETICS + HAIRCARE + CAPS + BEAUTY_EXTRA)
 # "Gucci cap", "caps" osv, men inte "cap sleeve" eller "cap toe".
 CAP_RE = re.compile(r"(?<!\w)caps?(?![\w-])(?!\s+(sleeve|toe|d'))", re.IGNORECASE)
@@ -309,6 +357,7 @@ for cfg in SEARCHES:
     cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
     cfg["_exclude"] = word_pattern(cfg.get("exclude"))
     cfg["_require"] = word_pattern(cfg.get("require"))
+    cfg["_exclude_re"] = re.compile(cfg["exclude_re"], re.IGNORECASE) if cfg.get("exclude_re") else None
     cfg["_bad_brands"] = [b.lower() for b in cfg.get("exclude_brands", [])]
 
 
@@ -378,6 +427,8 @@ def keep(it, cfg, max_price):
     if cfg["_exclude"] and cfg["_exclude"].search(text):
         return False
     if any(b in brand.lower() for b in cfg["_bad_brands"]):
+        return False
+    if cfg["_exclude_re"] and cfg["_exclude_re"].search(title):
         return False
     if cfg["_require"] and not cfg["_require"].search(title):
         return False
