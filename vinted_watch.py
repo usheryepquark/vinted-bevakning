@@ -184,6 +184,59 @@ MEDIA = [
     "inbunden", "hardcover", "paperback",
 ]
 
+# Tavlor, posters och prints (gäller alla sökningar). Ordet "print" i singular är
+# medvetet utelämnat, eftersom "logo print" och "leopard print" är mönster på kläder.
+ART = [
+    "tavla", "tavlor", "tavlan", "poster*", "affisch*", "prints", "art print*",
+    "konsttryck*", "inramad*", "framed", "litografi*", "lithograph*",              # sv/en
+    "plakat*", "maleri*", "kunsttryk*",                                            # da
+    "obraz", "obrazy", "obrazek", "plakat", "grafika", "rycina",                   # pl
+    "juliste*", "taulu", "taulut", "taidejuliste*", "taidepaino*",                 # fi
+]
+
+# Sjalar och scarfs (gäller alla sökningar). Vinterhalsdukar ("halsduk") är kvar.
+SCARVES = [
+    "sjal", "sjalar", "sjalen", "sjalett*", "scarf", "scarves", "shawl*", "stola",
+    "foulard*", "sidensjal*", "silk scarf*", "twilly",                             # sv/en
+    "tørklæde*", "silketørklæde*",                                                 # da
+    "chusta", "chustka", "chustki", "apaszka", "apaszki", "szal",                  # pl
+    "huivi", "huivit", "silkkihuivi*", "saali",                                    # fi
+]
+
+# Paletter och rouge (kompletterar kosmetikfiltret). Obs: "rouge" är också
+# franska för rött, så en "Polène rouge" sorteras också bort.
+MAKEUP_EXTRA = ["palett*", "paleta", "paletka*", "paletti*", "rouge"]
+
+# Parfymnamn från märkena (komplement till ordet parfym, ml och "eau de").
+PERFUME_NAMES = [
+    # Dior
+    "hypnotic*", "poison", "pure poison", "sauvage", "eau sauvage", "j'adore", "jadore",
+    "miss dior", "fahrenheit", "dune", "dolce vita", "dioressence", "dior addict",
+    "gris dior", "bois d'argent", "oud ispahan", "collection privée",
+    # Gucci
+    "bloom ambrosia*", "bloom nettare*", "bloom profumo*", "bloom acqua*",
+    "flora gorgeous*", "gorgeous gardenia", "gorgeous jasmine", "gorgeous magnolia",
+    "flora by gucci", "gucci rush", "gucci envy", "envy me", "mémoire d'une odeur",
+    "memoire d'une odeur", "alchemist's garden", "gucci pour homme", "gucci premiere",
+    # Prada
+    "prada candy", "candy kiss", "candy gloss", "candy florale", "candy sugar pop",
+    "luna rossa carbon", "luna rossa ocean", "luna rossa black", "luna rossa eau",
+    "l'homme prada", "la femme prada", "infusion d'iris", "infusion de*", "amber pour homme",
+    # Balenciaga
+    "florabotanica", "rosabotanica", "b. balenciaga", "balenciaga paris eau", "l'essence",
+    # YSL
+    "opium", "la nuit de l'homme", "kouros", "manifesto", "in love again", "cinéma",
+    "y eau", "myslf", "l'homme ysl",
+    # Givenchy
+    "l'interdit", "interdit", "gentleman givenchy", "givenchy gentleman", "irrésistible",
+    "irresistible", "amarige", "ange ou démon", "ange ou demon", "dahlia divin",
+    "xeryus", "organza", "hot couture", "givenchy pi", "play intense",
+    # Balmain
+    "carbone de balmain", "ivoire de balmain", "eau d'ivoire", "vent vert", "jolie madame",
+    # Bottega Veneta
+    "knot eau", "illusione", "parco palladiano", "bottega veneta pour homme",
+]
+
 # Sneakers (gäller alla sökningar).
 SNEAKERS = [
     "sneaker*", "trainer", "trainers", "gympaskor*", "sportskor*", "löparskor*",
@@ -196,7 +249,15 @@ SNEAKERS = [
     "triple s", "speed", "defender*", "3xl", "10xl", "x-pander", "track led",    # Balenciaga
     "geobasket*", "ramones", "dunks", "jumbo lace*", "turbodrk*", "geth runner*",  # Rick Owens
     "rhyton", "screener", "cloudbust*", "america's cup", "americas cup",          # Gucci/Prada
-    "b-court", "unicorn",                                                         # Balmain
+    "b-court", "unicorn", "b-bold", "b-runner", "b-skate", "b-east",              # Balmain
+    "basket", "tennis 1977", "ultrapace", "flashtrek", "re-web",                  # Gucci
+    "b01", "b25", "b28", "b29", "b44", "dior star", "dior one",                   # Dior
+    "downtown", "prax*", "collision", "systeme", "polarius", "mechano",           # Prada
+    "court classic", "sl/10", "sl10", "sl/01", "sl/06", "sl/24", "sl/61", "andy",
+    "wes",                                                                        # Saint Laurent
+    "spectre", "urban street", "tk-360", "tk-mx", "city sport", "marshmallow",    # Givenchy
+    "vintage runner*",                                                            # Rick Owens
+    "orbit", "speedster",                                                         # Bottega
 ]
 
 # Barnkläder (gäller alla sökningar, plus barnstorlekar som "3 år" och "12 mån").
@@ -214,9 +275,9 @@ KIDS = [
 # Förpackningar och presentpåsar (gäller alla sökningar).
 # Medvetet utan "box" och "dustbag", eftersom skor och väskor ofta säljs "med box".
 PACKAGING = [
-    "presentask*", "presentpåse*", "papperspåse*", "shoppingpåse*", "tom kartong",
+    "presentask*", "presentpås*", "papperspås*", "shoppingpås*", "påsar", "tom kartong",
     "tom låda", "tom ask", "tomma kartong*", "kartong", "kartongen",               # sv
-    "gaveæske*", "gavepose*", "papirpose*", "tom æske", "emballage",              # da
+    "gaveæske*", "gavepos*", "papirpos*", "torebki papierowe", "torby papierowe", "tom æske", "emballage",              # da
     "gift box*", "gift bag*", "paper bag*", "paper shopping bag*", "shopping bag",
     "empty box*", "box only", "only box", "packaging", "ribbon*",                 # en
     "pudełko", "pudełka", "torebka papierowa", "torba papierowa",
@@ -266,6 +327,12 @@ SHOES = [
     "pool slide*", "stretch boot*", "army boot*",                                 # modeller
 ]
 
+# Armband (används för Balenciaga).
+BRACELETS = [
+    "armband*", "armring*", "bracelet*", "bangle*", "armbånd*", "armring",
+    "bransolet*", "bransoletk*", "rannekoru*", "rannerengas*", "ranneke*",
+]
+
 BALENCIAGA_MOTO = {
     "match": ["balenciaga"],
     "require": [
@@ -291,7 +358,8 @@ SEARCHES = [
      "match": ["925", "sterling*", "sterlingsilver*", "äkta silver*", "silver 925",
                "srebro 925", "sølv 925", "hopea 925"]},
     {"label": "Gucci", "query": "Gucci", "match": ["gucci"], "exclude": ["ace"]},
-    {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"], "exclude": SHOES},
+    {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"],
+     "exclude": SHOES + BRACELETS},
     {"label": "Prada", "query": "Prada", "match": ["prada"],
      "exclude": ["re-nylon*", "re nylon*", "renylon*", "re-edition nylon*"]},
     {"label": "Rick Owens", "query": "Rick Owens", **RICK},
@@ -351,7 +419,15 @@ def word_pattern(words):
 
 EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS + HAIR + TIES
                           + EYEWEAR_CASES + SANDALS + WALLETS + MEDIA
+                          + ART + SCARVES + MAKEUP_EXTRA + PERFUME_NAMES
                           + COSMETICS + HAIRCARE + CAPS + BEAUTY_EXTRA)
+# Lådor och boxar, men inte "med låda", "with box", "original box" osv. och inte "box bag".
+BOX_RE = re.compile(
+    r"(?<!med )(?<!with )(?<!inkl )(?<!inkl\. )(?<!incl )(?<!incl\. )(?<!och )(?<!and )"
+    r"(?<!\+ )(?<!w/ )(?<!original )(?<!orginal )(?<!& )"
+    r"(?<!\w)(låda|lådor|lådan|lådorna|ask|askar|asken|box|boxes|æske|æsker|laatikko|laatikot|rasia)"
+    r"(?![\w-])(?!\s*(bag|väska|taske|torebka|laukku))",
+    re.IGNORECASE)
 # "Gucci cap", "caps" osv, men inte "cap sleeve" eller "cap toe".
 CAP_RE = re.compile(r"(?<!\w)caps?(?![\w-])(?!\s+(sleeve|toe|d'))", re.IGNORECASE)
 # "Gucci tie", "Dior silk tie" osv, men inte "tie-dye" eller "tie front".
@@ -429,7 +505,7 @@ def keep(it, cfg, max_price):
     brand = it["_brand"]
     text = f"{title} {brand}"
     if EXCLUDE_RE.search(text) or VOLUME_RE.search(title) or TIE_RE.search(title) \
-            or CAP_RE.search(title):
+            or CAP_RE.search(title) or BOX_RE.search(title):
         return False
     if cfg["_exclude"] and cfg["_exclude"].search(text):
         return False
