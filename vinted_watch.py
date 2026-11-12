@@ -16,6 +16,7 @@ import requests
 # =========================================================================
 
 MAX_PRICE = 800  # kr, gäller alla sökningar om inget annat anges
+MIN_PRICE = 350  # kr, lägsta pris; en sökning kan ha eget "min_price"
 
 # --- Gäller ALLA sökningar: titel eller märke ----------------------------
 EXCLUDE = [
@@ -381,7 +382,8 @@ BALENCIAGA_MOTO = {
 }
 
 SEARCHES = [
-    {"label": "925 silver", "query": "925 silver", "max_price": 250, "country": "SE",
+    {"label": "925 silver", "query": "925 silver", "max_price": 250, "min_price": 0,
+     "country": "SE",
      "brand_required": False,
      # försilvrat och silverfärgat är inte äkta silver (guldpläterat 925 är det, så det får vara kvar)
      "exclude": ["silverpläter*", "försilvr*", "silverfärg*", "silver plated*", "silver-plated*",
@@ -571,7 +573,8 @@ def keep(it, cfg, max_price):
     elif not cfg["_match"].search(text):
         return False
     try:
-        if float((it.get("price") or {}).get("amount", 0)) > max_price:
+        amount = float((it.get("price") or {}).get("amount", 0))
+        if amount > max_price or amount < cfg.get("min_price", MIN_PRICE):
             return False
     except (TypeError, ValueError):
         pass
