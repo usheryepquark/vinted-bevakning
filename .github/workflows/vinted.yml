@@ -13,6 +13,10 @@ on:
         description: "Spara nya annonser som sedda utan att skicka notiser"
         type: boolean
         default: false
+      only:
+        description: "Bara dessa sökningar, kommaseparerade (tomt = alla)"
+        type: string
+        default: ""
       recent_minutes:
         description: "Skicka notiser för annonser från senaste X minuterna (0 = av)"
         type: number
@@ -40,6 +44,7 @@ jobs:
       - name: Kolla Vinted
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ONLY: ${{ inputs.only }}
           SILENT: ${{ inputs.silent && '1' || '' }}
           DEBUG_KEYS: ${{ inputs.test && '1' || '' }}
         run: |

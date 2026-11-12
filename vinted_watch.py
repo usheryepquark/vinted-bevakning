@@ -668,6 +668,14 @@ def newest_id(s):
     return max(row["productItem"]["id"] for row in raw if isinstance(row, dict) and row.get("productItem"))
 
 
+def selected_searches():
+    """Sökningar valda med ONLY="Loewe,Totême" (tomt = alla)."""
+    only = [x.strip().lower() for x in os.environ.get("ONLY", "").split(",") if x.strip()]
+    if not only:
+        return SEARCHES
+    return [c for c in SEARCHES if c["label"].lower() in only]
+
+
 def send_recent(minutes):
     """Skickar notiser för annonser som klarar filtren och är från ungefär de senaste
     X minuterna. Vinted visar ingen uppladdningstid, så åldern räknas ut från id:t.
@@ -676,7 +684,7 @@ def send_recent(minutes):
     start_id, start_t = newest_id(s), time.time()
     rough_cutoff = start_id - minutes * 15000  # generös gräns för hur långt bak vi bläddrar
     found = {}
-    for cfg in SEARCHES:
+    for cfg in selected_searches():
         max_price = cfg.get("max_price", MAX_PRICE)
         for page in range(1, 6):  # upp till 5 sidor bakåt
             try:
