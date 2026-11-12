@@ -238,6 +238,9 @@ PERFUME_NAMES = [
     "imagination", "ombre nomade", "l'immensité", "afternoon swim", "attrape-rêves",
     "attrape-reves", "spell on you", "météore", "nouveau monde", "cœur battant",
     "coeur battant", "rose des vents", "california dream", "sun song", "pacific chill",
+    # Loewe
+    "agua de loewe", "loewe agua", "loewe 001", "001 woman", "001 man", "loewe aire",
+    "aire sutileza", "solo loewe", "solo ella", "esencia loewe", "earthsong",
     # Bottega Veneta
     "knot eau", "illusione", "parco palladiano", "bottega veneta pour homme",
 ]
@@ -263,6 +266,7 @@ SNEAKERS = [
     "spectre", "urban street", "tk-360", "tk-mx", "city sport", "marshmallow",    # Givenchy
     "vintage runner*",                                                            # Rick Owens
     "orbit", "speedster",                                                         # Bottega
+    "flow runner*", "ballet runner*",                                             # Loewe
     "run away", "runaway", "frontrow", "front row", "archlight", "time out",
     "lv trainer*", "lv skate*", "lv runner*", "beverly hills", "rivoli",          # Louis Vuitton
 ]
@@ -413,13 +417,21 @@ SEARCHES = [
     {"label": "Balenciaga moto", "query": "Balenciaga motorcycle bag", **BALENCIAGA_MOTO},
     {"label": "Balenciaga Giant", "query": "Balenciaga giant", **BALENCIAGA_MOTO},
     {"label": "Bottega Veneta", "query": "Bottega Veneta", "match": ["bottega veneta", "bottega"]},
-    {"label": "Léo et Violette", "query": "Leo et Violette",
+    {"label": "Léo et Violette", "query": "Leo et Violette", "min_price": 100, "max_price": 2000,
      "match": ["léo et violette", "leo et violette", "léo & violette", "leo & violette",
                "leo and violette", "léo violette", "leo violette"]},
     {"label": "Gianni Chiarini", "query": "Gianni Chiarini",
      "match": ["gianni chiarini", "chiarini", "gianni charini", "charini"]},
     {"label": "Polène", "query": "Polene", "match": ["polène", "polene", "polène paris"]},
     {"label": "Mulberry", "query": "Mulberry", "match": ["mulberry"]},
+    {"label": "Totême", "query": "Toteme", "match": ["totême", "toteme", "totème"],
+     "min_price": 400, "max_price": 1200},
+    {"label": "Loewe", "query": "Loewe", "match": ["loewe"], "min_price": 400, "max_price": 1200},
+    {"label": "Le Tanneur", "query": "Le Tanneur", "match": ["le tanneur", "tanneur"],
+     "min_price": 400, "max_price": 2000},
+    {"label": "Parisa Wang", "query": "Parisa Wang", "match": ["parisa wang", "parisawang"],
+     "min_price": 400, "max_price": 2000},
+    {"label": "Elleme", "query": "Elleme", "match": ["elleme"], "min_price": 400, "max_price": 2000},
     {"label": "Louis Vuitton", "query": "Louis Vuitton", "match": ["louis vuitton", "vuitton"]},
     {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS,
      "require": BAGS},
