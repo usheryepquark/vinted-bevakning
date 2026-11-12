@@ -17,6 +17,10 @@ on:
         description: "Bara dessa sökningar, kommaseparerade (tomt = alla)"
         type: string
         default: ""
+      skip:
+        description: "Hoppa över dessa (id eller titel, separerade med |)"
+        type: string
+        default: ""
       recent_minutes:
         description: "Skicka notiser för annonser från senaste X minuterna (0 = av)"
         type: number
@@ -45,6 +49,7 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           ONLY: ${{ inputs.only }}
+          SKIP: ${{ inputs.skip }}
           SILENT: ${{ inputs.silent && '1' || '' }}
           DEBUG_KEYS: ${{ inputs.test && '1' || '' }}
         run: |

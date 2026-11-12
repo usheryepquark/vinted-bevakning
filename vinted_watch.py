@@ -699,15 +699,20 @@ def send_recent(minutes):
             if not raw or min(it["id"] for it in raw) < rough_cutoff:
                 break
     end_id, end_t = newest_id(s), time.time()
-    per_min = max((end_id - start_id) / max(end_t - start_t, 1) * 60, 3000)
+    # Mätningen under körningen blir ofta för låg (kort fönster); Vinted ligger
+    # vanligen kring 8 000 nya annonser/min. Ta det högsta av de två.
+    per_min = max((end_id - start_id) / max(end_t - start_t, 1) * 60, 8000)
     cutoff = start_id - minutes * per_min
     print(f"~{per_min:.0f} nya annonser/min på Vinted, gräns id {cutoff:.0f}")
-    recent = sorted((v for k, v in found.items() if k >= cutoff), key=lambda x: x[0]["id"])
+    skip = {x.strip().lower() for x in os.environ.get("SKIP", "").split("|") if x.strip()}
+    recent = sorted((v for k, v in found.items() if k >= cutoff
+                     and str(k) not in skip and (v[0].get("title") or "").strip().lower() not in skip),
+                    key=lambda x: x[0]["id"])
     cfg_by_label = {c["label"]: c for c in SEARCHES}
     recent = [(it, label) for it, label in recent if country_ok(s, it, cfg_by_label[label])]
     for it, label in recent:
         notify(it, label)
-        print(f"  skickad: {label} | {it['title'][:60]}")
+        print(f"  skickad: {label} | {it['id']} | {it['title'][:60]}")
         time.sleep(1)
     print(f"Skickade {len(recent)} notiser.")
 
