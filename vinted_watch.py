@@ -346,6 +346,32 @@ SHOE_WORDS = SHOES + SANDALS + [
     "szpilk*", "nilkkuri*", "korkokeng*", "støvlet*", "pumps",
 ]
 
+# Vinteds kategori för dam (kläder, väskor, skor och accessoarer för kvinnor).
+WOMEN = 1904
+
+# Accessoarer (används av sökningar med "only": det som inte är väska, sko
+# eller accessoar räknas som kläder).
+ACCESSORIES = [
+    "smycke*", "halsband*", "örhäng*", "ring", "ringar", "ringen", "armband*", "berlock*",
+    "brosch*", "hänge*", "klocka", "klockor", "armbandsur*",                          # sv
+    "necklace*", "earring*", "rings", "bracelet*", "brooch*", "pendant*", "jewel*",
+    "watch", "watches", "charm*",                                                      # en
+    "naszyjnik*", "kolczyk*", "pierścion*", "bransolet*", "zegarek*", "broszk*",
+    "wisior*", "biżuteri*",                                                            # pl
+    "halskæde*", "øreringe*", "armbånd*", "smykke*", "ur",                            # da
+    "kaulakoru*", "korvakoru*", "sormus*", "rannekello*", "kello", "rannekoru*", "koru",
+    "korut",                                                                           # fi
+    "bälte*", "skärp*", "belt", "belts", "pasek", "paski", "bælte*", "vyö",           # bälten
+    "solglasögon*", "glasögon*", "sunglass*", "glasses", "eyewear", "okulary",
+    "solbriller*", "briller", "aurinkolasi*", "silmälasi*",                            # glasögon
+    "hatt", "hattar", "mössa", "mössor", "beanie*", "hat", "hats", "bucket hat*",
+    "czapk*", "kapelusz*", "hue", "huer", "pipo*", "hattu*",                          # huvud
+    "handsk*", "gloves", "glove", "rękawiczk*", "handsker", "hanskat", "hanska",       # handskar
+    "nyckelring*", "keychain*", "key ring*", "keyring*", "brelok*", "avaimenperä*",
+    "mobilskal*", "phone case*", "iphone*", "airpods*", "etui na telefon",
+    "paraply*", "umbrella*", "parasol*", "sateenvarjo*", "smycz", "szelki",            # övrigt
+]
+
 # Väskor (används för Givenchy: titeln måste innehålla något av dessa).
 BAGS = [
     "väsk*", "handväsk*", "axelväsk*", "kvällsväsk*", "kuvertväsk*", "midjeväsk*",
@@ -362,6 +388,13 @@ BAGS = [
     "antigona", "pandora", "nightingale", "voyou", "cut out", "cut-out", "kenny",
     "whip", "g-tote", "4g", "mystic", "lucrezia", "horizon", "eden", "obsedia",
     "moon cut", "shark lock bag", "g-cube", "g-essentials",
+    # Gucci-modeller
+    "jackie", "dionysus", "marmont", "ophidia", "horsebit 1955", "bamboo bag*",
+    "sylvie", "soho disco", "soho", "diana", "attache", "blondie", "boston",
+    "padlock", "bree", "gg supreme", "jumbo gg",
+    # Prada-modeller
+    "galleria", "cleo", "cahier", "sidonie", "saffiano", "tessuto", "re-edition",
+    "arqué", "arque", "symbole", "bauletto",
 ]
 
 # Armband (används för Balenciaga).
@@ -396,13 +429,15 @@ SEARCHES = [
      "match": ["925", "sterling*", "sterlingsilver*", "äkta silver*", "silver 925",
                "srebro 925", "sølv 925", "hopea 925"]},
     {"label": "Gucci", "query": "Gucci", "match": ["gucci"],
+     "params": {"catalog_ids": WOMEN},
+     "only": ["bags", "shoes", "clothing"], "shoe_size": "39",
      "exclude": ["ace", "t-shirt*", "tshirt*", "t shirt*", "tee", "tees", "t-paita*",
                  "koszulk*", "t-shirty", "tshirty"]},
     {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"],
      "exclude": SHOES + BRACELETS},
     {"label": "Prada", "query": "Prada", "match": ["prada"],
      "exclude": ["re-nylon*", "re nylon*", "renylon*", "re-edition nylon*"],
-     "shoe_size": "39"},
+     "require": BAGS},
     {"label": "Rick Owens", "query": "Rick Owens", **RICK},
     {"label": "DRKSHDW", "query": "DRKSHDW", **RICK},
     {"label": "Rick Owens Lilies", "query": "Rick Owens Lilies", **RICK},
@@ -488,6 +523,8 @@ EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS + HAIR + TIES
                           + ART + SCARVES + MAKEUP_EXTRA + PERFUME_NAMES
                           + COSMETICS + HAIRCARE + CAPS + BEAUTY_EXTRA)
 SHOE_RE = word_pattern(SHOE_WORDS)
+BAG_RE = word_pattern(BAGS)
+ACCESSORY_RE = word_pattern(ACCESSORIES)
 
 # Lådor, boxar och påsar, men inte "med låda", "with box", "original box" osv. och inte "box bag".
 BOX_RE = re.compile(
@@ -551,8 +588,9 @@ def brand_and_size(it):
     return (b.group(1).strip() if b else ""), (sz.group(1).strip() if sz else "")
 
 
-def fetch(s, query, max_price, page=1):
+def fetch(s, query, max_price, page=1, extra=None):
     params = {"search_text": query, "price_to": max_price, "order": "newest_first"}
+    params.update(extra or {})
     if page > 1:
         params["page"] = page
     r = s.get(f"{BASE}/catalog", params=params, timeout=30)
@@ -587,6 +625,17 @@ def keep(it, cfg, max_price):
         return False
     if cfg["_require"] and not cfg["_require"].search(title):
         return False
+    if cfg.get("only"):
+        if BAG_RE.search(title):
+            kind = "bags"
+        elif SHOE_RE.search(title):
+            kind = "shoes"
+        elif ACCESSORY_RE.search(title):
+            kind = "accessories"
+        else:
+            kind = "clothing"
+        if kind not in cfg["only"]:
+            return False
     if cfg["_shoe_size"] and SHOE_RE.search(title) \
             and not cfg["_shoe_size"].search(it["_size"]):
         return False
@@ -705,7 +754,7 @@ def send_recent(minutes):
         max_price = cfg.get("max_price", MAX_PRICE)
         for page in range(1, 6):  # upp till 5 sidor bakåt
             try:
-                raw = fetch(s, cfg["query"], max_price, page)
+                raw = fetch(s, cfg["query"], max_price, page, cfg.get("params"))
             except Exception as e:
                 print(f"Fel vid sökning på {cfg['label']} sida {page}: {e}")
                 break
@@ -748,7 +797,8 @@ def main():
     for cfg in SEARCHES:
         max_price = cfg.get("max_price", MAX_PRICE)
         try:
-            items = [it for it in fetch(s, cfg["query"], max_price) if keep(it, cfg, max_price)]
+            items = [it for it in fetch(s, cfg["query"], max_price, 1, cfg.get("params"))
+                     if keep(it, cfg, max_price)]
         except Exception as e:
             print(f"Fel vid sökning på {cfg['label']}: {e}")
             continue
