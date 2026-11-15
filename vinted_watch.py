@@ -304,6 +304,7 @@ PACKAGING = [
 #  require:        minst ett av orden måste stå i titeln (t.ex. modellnamn)
 #  max_price:      eget maxpris för just den sökningen
 #  country:        bara säljare från detta land, t.ex. "SE" (kollas på säljarens profil)
+#  paused:         True = pausad (ingen sökning, inga notiser)
 #  brand_required: False = märket behöver inte stämma, räcker att titeln matchar
 RICK = {
     "match": ["rick owens", "drkshdw", "drk shdw", "lilies"],
@@ -420,6 +421,7 @@ BALENCIAGA_MOTO = {
 
 SEARCHES = [
     {"label": "925 silver", "query": "925 silver", "max_price": 250, "min_price": 0,
+     "paused": True,
      "country": "SE",
      "brand_required": False,
      # försilvrat och silverfärgat är inte äkta silver (guldpläterat 925 är det, så det får vara kvar)
@@ -737,9 +739,10 @@ def newest_id(s):
 def selected_searches():
     """Sökningar valda med ONLY="Loewe,Totême" (tomt = alla)."""
     only = [x.strip().lower() for x in os.environ.get("ONLY", "").split(",") if x.strip()]
+    active = [c for c in SEARCHES if not c.get("paused")]
     if not only:
-        return SEARCHES
-    return [c for c in SEARCHES if c["label"].lower() in only]
+        return active
+    return [c for c in active if c["label"].lower() in only]
 
 
 def send_recent(minutes):
@@ -795,6 +798,10 @@ def main():
     new_count = 0
     ok = 0
     for cfg in SEARCHES:
+        if cfg.get("paused"):
+            # pausad: glöm att den är startad, så att en återstart sparar tyst först
+            seeded.discard(cfg["query"])
+            continue
         max_price = cfg.get("max_price", MAX_PRICE)
         try:
             items = [it for it in fetch(s, cfg["query"], max_price, 1, cfg.get("params"))
