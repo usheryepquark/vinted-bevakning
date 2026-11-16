@@ -396,6 +396,14 @@ BAGS = [
     # Prada-modeller
     "galleria", "cleo", "cahier", "sidonie", "saffiano", "tessuto", "re-edition",
     "arqué", "arque", "symbole", "bauletto",
+    # Balenciaga-modeller
+    "city", "le city", "part time", "hourglass", "cagole", "le cagole", "neo classic",
+    "everyday tote", "navy cabas", "cabas", "bazar", "ville", "motorcycle*", "giant",
+    "papier", "le dix", "crush",
+    # Mulberry-modeller
+    "bayswater", "alexa", "lily", "darley", "amberley", "roxanne", "antony", "iris",
+    "postman's lock", "postmans lock", "islington", "softie", "pimlico", "clovelly",
+    "harlow", "seaton", "keeley", "zipped bayswater", "mini lily",
 ]
 
 # Armband (används för Balenciaga).
@@ -436,7 +444,7 @@ SEARCHES = [
      "exclude": ["ace", "t-shirt*", "tshirt*", "t shirt*", "tee", "tees", "t-paita*",
                  "koszulk*", "t-shirty", "tshirty"]},
     {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"],
-     "exclude": SHOES + BRACELETS},
+     "exclude": SHOES + BRACELETS, "require": BAGS},
     {"label": "Prada", "query": "Prada", "match": ["prada"],
      "exclude": ["re-nylon*", "re nylon*", "renylon*", "re-edition nylon*"],
      "require": BAGS},
@@ -460,7 +468,7 @@ SEARCHES = [
     {"label": "Gianni Chiarini", "query": "Gianni Chiarini",
      "match": ["gianni chiarini", "chiarini", "gianni charini", "charini"]},
     {"label": "Polène", "query": "Polene", "match": ["polène", "polene", "polène paris"]},
-    {"label": "Mulberry", "query": "Mulberry", "match": ["mulberry"]},
+    {"label": "Mulberry", "query": "Mulberry", "match": ["mulberry"], "require": BAGS},
     {"label": "Totême", "query": "Toteme", "match": ["totême", "toteme", "totème"],
      "min_price": 400, "max_price": 1200},
     {"label": "Loewe", "query": "Loewe", "match": ["loewe"], "min_price": 400, "max_price": 1200},
@@ -486,7 +494,8 @@ SEARCHES = [
      "min_price": 400, "max_price": 2000},
     {"label": "Decadent Copenhagen", "query": "Decadent Copenhagen",
      "match": ["decadent copenhagen", "decadent"], "min_price": 400, "max_price": 2000},
-    {"label": "Louis Vuitton", "query": "Louis Vuitton", "match": ["louis vuitton", "vuitton"]},
+    {"label": "Louis Vuitton", "query": "Louis Vuitton", "match": ["louis vuitton", "vuitton"],
+     "exclude": SHOE_WORDS},
     {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS,
      "require": BAGS},
 ]
@@ -525,6 +534,8 @@ EXCLUDE_RE = word_pattern(EXCLUDE + KIDS + PACKAGING + SNEAKERS + HAIR + TIES
                           + ART + SCARVES + MAKEUP_EXTRA + PERFUME_NAMES
                           + COSMETICS + HAIRCARE + CAPS + BEAUTY_EXTRA)
 SHOE_RE = word_pattern(SHOE_WORDS)
+# Klädstorlekar XXS, XS och S (gäller alla sökningar), t.ex. "S", "XS / 34 / 6".
+SMALL_SIZE_RE = re.compile(r"^\s*(XXXS|XXS|XS|S)(?![A-Za-z])", re.IGNORECASE)
 BAG_RE = word_pattern(BAGS)
 ACCESSORY_RE = word_pattern(ACCESSORIES)
 
@@ -640,6 +651,8 @@ def keep(it, cfg, max_price):
             return False
     if cfg["_shoe_size"] and SHOE_RE.search(title) \
             and not cfg["_shoe_size"].search(it["_size"]):
+        return False
+    if SMALL_SIZE_RE.search(it["_size"]):
         return False
     if KIDS_SIZE_RE.search(it["_size"]):
         return False
