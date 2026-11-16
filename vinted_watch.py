@@ -17,6 +17,7 @@ import requests
 
 MAX_PRICE = 800  # kr, gäller alla sökningar om inget annat anges
 MIN_PRICE = 350  # kr, lägsta pris; en sökning kan ha eget "min_price"
+SHOE_SIZE = "39"  # skor kommer bara i denna storlek (alla sökningar)
 
 # --- Gäller ALLA sökningar: titel eller märke ----------------------------
 EXCLUDE = [
@@ -560,8 +561,9 @@ for cfg in SEARCHES:
     cfg["_match"] = word_pattern(cfg.get("match") or [cfg["query"]])
     cfg["_exclude"] = word_pattern(cfg.get("exclude"))
     cfg["_require"] = word_pattern(cfg.get("require"))
-    cfg["_shoe_size"] = (re.compile(r"(?<![\d.,])" + re.escape(cfg["shoe_size"]) + r"(?![\d.,])")
-                         if cfg.get("shoe_size") else None)
+    _size = cfg.get("shoe_size", SHOE_SIZE)
+    cfg["_shoe_size"] = (re.compile(r"(?<![\d.,])" + re.escape(_size) + r"(?![\d.,])")
+                         if _size else None)
     cfg["_exclude_re"] = re.compile(cfg["exclude_re"], re.IGNORECASE) if cfg.get("exclude_re") else None
     cfg["_bad_brands"] = [b.lower() for b in cfg.get("exclude_brands", [])]
 
