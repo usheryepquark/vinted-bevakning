@@ -470,6 +470,12 @@ SEARCHES = [
      "match": ["gianni chiarini", "chiarini", "gianni charini", "charini"]},
     {"label": "Polène", "query": "Polene", "match": ["polène", "polene", "polène paris"]},
     {"label": "Mulberry", "query": "Mulberry", "match": ["mulberry"], "require": BAGS},
+    {"label": "Rodebjer bälten & broscher", "query": "Rodebjer", "match": ["rodebjer"],
+     "min_price": 0, "max_price": 350,
+     "require": ["bälte*", "skärp*", "belt", "belts", "pasek", "paski", "bælte*", "vyö*",
+                 "brosch*", "brooch*", "broszk*", "broche*", "rintakoru*"],
+     "exclude": ["belt bag*", "bältesväsk*", "midjeväsk*", "bæltetask*", "nerka"],
+     "any_size": True},
     {"label": "Totême", "query": "Toteme", "match": ["totême", "toteme", "totème"],
      "min_price": 400, "max_price": 1200},
     {"label": "Loewe", "query": "Loewe", "match": ["loewe"], "min_price": 400, "max_price": 1200},
@@ -654,7 +660,7 @@ def keep(it, cfg, max_price):
     if cfg["_shoe_size"] and SHOE_RE.search(title) \
             and not cfg["_shoe_size"].search(it["_size"]):
         return False
-    if SMALL_SIZE_RE.search(it["_size"]):
+    if not cfg.get("any_size") and SMALL_SIZE_RE.search(it["_size"]):
         return False
     if KIDS_SIZE_RE.search(it["_size"]):
         return False
