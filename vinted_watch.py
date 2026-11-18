@@ -499,6 +499,12 @@ SEARCHES = [
      "min_price": 400, "max_price": 2000},
     {"label": "Cala Jade", "query": "Cala Jade", "match": ["cala jade", "calajade"],
      "min_price": 400, "max_price": 2000},
+    {"label": "Mansur Gavriel", "query": "Mansur Gavriel",
+     "match": ["mansur gavriel", "mansurgavriel"], "min_price": 400, "max_price": 1000,
+     "require": BAGS + ["lady bag", "cloud", "candy bag", "tulipano", "sun bag",
+                        "everyday soft", "mini lady", "protea", "bucket"]},
+    {"label": "Hereu", "query": "Hereu", "match": ["hereu"], "min_price": 400, "max_price": 1200},
+    {"label": "Osoi", "query": "Osoi", "match": ["osoi"]},
     {"label": "Louis Vuitton", "query": "Louis Vuitton", "match": ["louis vuitton", "vuitton"],
      "exclude": SHOE_WORDS},
     {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS,
@@ -529,6 +535,7 @@ TYPOS = {
     "Marge Sherwood": ["Margesherwood", "Marge Sherwod"],
     "Cala Jade": ["Cala Jada", "Calajade"],
     "Le Tanneur": ["Le Taneur"],
+    "Mansur Gavriel": ["Mansur Gavrielle", "Mansur Gabriel", "Mansour Gavriel"],
     "Rodebjer bälten & broscher": ["Rodebjär", "Rodebjerg"],
 }
 for _cfg in list(SEARCHES):
