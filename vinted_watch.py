@@ -505,6 +505,40 @@ SEARCHES = [
      "require": BAGS},
 ]
 
+# --- Felstavningar ---------------------------------------------------------
+# Annonser med felstavat märke får färre tittare, och därmed lägre konkurrens.
+# Varje felstavning blir en egen sökning med samma regler som originalet, och
+# felstavningen räknas som rätt märke. Några är medvetet utelämnade för att de
+# krockar med andra märken eller ord (t.ex. "Lowe", "Totem", "Prado").
+TYPOS = {
+    "Gucci": ["Guci", "Gucchi"],
+    "Balenciaga": ["Balenciga", "Balenziaga", "Balenciage"],
+    "Prada": ["Pradda"],
+    "Rick Owens": ["Rick Owen", "Rik Owens"],
+    "Saint Laurent": ["Saint Lauren", "Saint Laurant", "St Laurent"],
+    "Yves Saint Laurent": ["Yves Saint Lauren", "Yves St Laurent", "Yves Saint Laurant"],
+    "Ann Demeulemeester": ["Ann Demeulmeester", "Ann Demeulemester", "Ann Demulemeester"],
+    "Bottega Veneta": ["Botega Veneta", "Bottega Venetta", "Botega"],
+    "Léo et Violette": ["Leo et Violet", "Leo e Violette"],
+    "Gianni Chiarini": ["Giani Chiarini", "Gianni Charini"],
+    "Polène": ["Poléne", "Pollene"],
+    "Mulberry": ["Mulbery", "Mullberry"],
+    "Louis Vuitton": ["Louis Vitton", "Louis Vuiton", "Luis Vuitton", "Louis Viutton"],
+    "Givenchy": ["Givency", "Givenchi", "Givenshy"],
+    "Phoebe Philo": ["Pheobe Philo", "Phoebe Phylo"],
+    "Marge Sherwood": ["Margesherwood", "Marge Sherwod"],
+    "Cala Jade": ["Cala Jada", "Calajade"],
+    "Le Tanneur": ["Le Taneur"],
+    "Rodebjer bälten & broscher": ["Rodebjär", "Rodebjerg"],
+}
+for _cfg in list(SEARCHES):
+    _typos = TYPOS.get(_cfg["label"], [])
+    if not _typos:
+        continue
+    _cfg["match"] = list(_cfg.get("match") or [_cfg["query"]]) + [t.lower() for t in _typos]
+    for _t in _typos:
+        SEARCHES.append({**_cfg, "query": _t, "typo": True})
+
 BASE = "https://www.vinted.se"
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 SEEN_FILE = "seen.json"
