@@ -499,8 +499,6 @@ SEARCHES = [
      "min_price": 400, "max_price": 2000},
     {"label": "Cala Jade", "query": "Cala Jade", "match": ["cala jade", "calajade"],
      "min_price": 400, "max_price": 2000},
-    {"label": "Decadent Copenhagen", "query": "Decadent Copenhagen",
-     "match": ["decadent copenhagen", "decadent"], "min_price": 400, "max_price": 2000},
     {"label": "Louis Vuitton", "query": "Louis Vuitton", "match": ["louis vuitton", "vuitton"],
      "exclude": SHOE_WORDS},
     {"label": "Givenchy", "query": "Givenchy", "match": ["givenchy"], "exclude": COSMETICS,
