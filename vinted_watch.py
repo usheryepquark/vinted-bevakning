@@ -443,7 +443,7 @@ SEARCHES = [
      "params": {"catalog_ids": WOMEN},
      "only": ["bags", "shoes", "clothing"], "shoe_size": "39",
      "exclude": ["ace", "t-shirt*", "tshirt*", "t shirt*", "tee", "tees", "t-paita*",
-                 "koszulk*", "t-shirty", "tshirty"]},
+                 "koszulk*", "t-shirty", "tshirty", "flora", "aqua", "acqua"]},
     {"label": "Balenciaga", "query": "Balenciaga", "match": ["balenciaga"],
      "exclude": SHOES + BRACELETS, "require": BAGS},
     {"label": "Prada", "query": "Prada", "match": ["prada"],
